@@ -7,6 +7,6 @@
     <string name="radius">Radius (km):</string>
     <string name="drop_text">Text:</string>
     <string name="create">Create</string>
-    <string name="drop_created">Record created.</string>
+    <string name="content_authority">com.example.drop.drop.app</string>
     <string name="action_settings">Settings</string>
 </resources>

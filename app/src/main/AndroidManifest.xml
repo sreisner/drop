@@ -17,6 +17,13 @@
             </intent-filter>
 
         </activity>
+
+        <provider
+            android:name=".data.DropProvider"
+            android:authorities="@string/content_authority"
+            android:syncable="true"
+            android:exported="false">
+        </provider>
     </application>
 
 </manifest>

@@ -1,11 +1,16 @@
 package com.example.drop.drop;
 
+import android.content.ContentValues;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
+
+import com.example.drop.drop.data.DropContract;
 
 
 public class CreateDropActivity extends ActionBarActivity {
@@ -39,6 +44,24 @@ public class CreateDropActivity extends ActionBarActivity {
     }
 
     public void createDrop(View view) {
-        Toast.makeText(this, R.string.drop_created, Toast.LENGTH_SHORT).show();
+        EditText latitudeEditText = (EditText)findViewById(R.id.latitude);
+        EditText longitudeEditText = (EditText)findViewById(R.id.longitude);
+        EditText radiusEditText = (EditText)findViewById(R.id.radius);
+        EditText dropTextEditText = (EditText)findViewById(R.id.drop_text);
+
+        long latitude = Long.parseLong(latitudeEditText.getText().toString());
+        long longitude = Long.parseLong(longitudeEditText.getText().toString());
+        long radius = Long.parseLong(radiusEditText.getText().toString());
+        String dropText = dropTextEditText.getText().toString();
+
+        ContentValues values = new ContentValues();
+        values.put(DropContract.DropEntry.COLUMN_LATITUDE, latitude);
+        values.put(DropContract.DropEntry.COLUMN_LONGITUDE, longitude);
+        values.put(DropContract.DropEntry.COLUMN_RADIUS, radius);
+        values.put(DropContract.DropEntry.COLUMN_DROP_TEXT, dropText);
+
+        Uri uri = DropContract.DropEntry.CONTENT_URI;
+        Uri recordUri = getContentResolver().insert(uri, values);
+        Toast.makeText(this, "Row created with ID: " + recordUri.getLastPathSegment(), Toast.LENGTH_SHORT).show();
     }
 }
