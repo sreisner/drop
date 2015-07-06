@@ -1,6 +1,7 @@
 package com.example.drop.drop;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -38,6 +39,9 @@ public class CreateDropActivity extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        } else if(id == R.id.action_next) {
+            Intent intent = new Intent(this, DropMapActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -46,18 +50,15 @@ public class CreateDropActivity extends ActionBarActivity {
     public void createDrop(View view) {
         EditText latitudeEditText = (EditText)findViewById(R.id.latitude);
         EditText longitudeEditText = (EditText)findViewById(R.id.longitude);
-        EditText radiusEditText = (EditText)findViewById(R.id.radius);
         EditText dropTextEditText = (EditText)findViewById(R.id.drop_text);
 
-        long latitude = Long.parseLong(latitudeEditText.getText().toString());
-        long longitude = Long.parseLong(longitudeEditText.getText().toString());
-        long radius = Long.parseLong(radiusEditText.getText().toString());
+        double latitude = Double.parseDouble(latitudeEditText.getText().toString());
+        double longitude = Double.parseDouble(longitudeEditText.getText().toString());
         String dropText = dropTextEditText.getText().toString();
 
         ContentValues values = new ContentValues();
         values.put(DropContract.DropEntry.COLUMN_LATITUDE, latitude);
         values.put(DropContract.DropEntry.COLUMN_LONGITUDE, longitude);
-        values.put(DropContract.DropEntry.COLUMN_RADIUS, radius);
         values.put(DropContract.DropEntry.COLUMN_DROP_TEXT, dropText);
 
         Uri uri = DropContract.DropEntry.CONTENT_URI;

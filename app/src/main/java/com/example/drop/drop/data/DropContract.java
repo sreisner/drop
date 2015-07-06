@@ -28,7 +28,6 @@ public class DropContract {
 
         public static final String COLUMN_LATITUDE = "latitude";
         public static final String COLUMN_LONGITUDE = "longitude";
-        public static final String COLUMN_RADIUS = "radius";
         public static final String COLUMN_DROP_TEXT = "drop_text";
     }
 
