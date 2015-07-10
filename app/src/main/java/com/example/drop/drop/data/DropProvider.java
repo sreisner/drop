@@ -99,17 +99,22 @@ public class DropProvider extends ContentProvider {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
 
-        int result;
+        int rowsDeleted;
         switch(match) {
             case DROP: {
-                result = db.delete(DropContract.DropEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = db.delete(DropContract.DropEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
 
-        return result;
+        if(rowsDeleted > 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+        db.close();
+
+        return rowsDeleted;
     }
 
     @Override

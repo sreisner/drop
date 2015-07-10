@@ -11,8 +11,16 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_coordinates"
+        android:title="@string/action_coordinates"
+        android:orderInCategory="1"
+        android:icon="@android:drawable/ic_menu_compass"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_next"
         android:title="@string/action_next"
+        android:orderInCategory="2"
         android:icon="@android:drawable/ic_media_next"
         app:showAsAction="always" />
 </menu>
