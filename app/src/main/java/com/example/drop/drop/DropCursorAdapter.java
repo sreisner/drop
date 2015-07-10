@@ -30,8 +30,8 @@ public class DropCursorAdapter extends CursorAdapter {
         double longitude = cursor.getDouble(DropMapActivity.COL_DROP_LONGITUDE);
 
         viewHolder.dropTextView.setText(dropText);
-        viewHolder.latitudeTextView.setText(String.format("%.2f", latitude));
-        viewHolder.longitudeTextView.setText(String.format("%.2f", longitude));
+        viewHolder.latitudeTextView.setText("" + latitude);
+        viewHolder.longitudeTextView.setText("" + longitude);
     }
 
     public static class ViewHolder {
