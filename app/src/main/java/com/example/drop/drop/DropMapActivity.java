@@ -118,17 +118,18 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
 
     @Override
     public void onMapReady(GoogleMap map) {
-        Log.d(LOG_TAG, "DropMapActivity.onMapReady");
         LatLng home = new LatLng(HOME_LAT, HOME_LONG);
-        // map.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(home, DEFAULT_ZOOM_LEVEL));
 
+        drops.moveToPosition(-1);
         while(drops.moveToNext()) {
             double latitude = drops.getDouble(DropMapActivity.COL_DROP_LATITUDE);
             double longitude = drops.getDouble(DropMapActivity.COL_DROP_LONGITUDE);
             String title = drops.getString(DropMapActivity.COL_DROP_TEXT);
             LatLng position = new LatLng(latitude, longitude);
-            map.addMarker(new MarkerOptions().position(position).title(title));
+            map.addMarker(new MarkerOptions()
+                    .position(position)
+                    .title(title));
         }
     }
 }
