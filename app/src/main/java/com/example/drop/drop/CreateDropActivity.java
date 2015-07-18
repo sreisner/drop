@@ -1,9 +1,7 @@
 package com.example.drop.drop;
 
-import android.content.ContentValues;
 import android.content.Intent;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -12,14 +10,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.drop.drop.data.DropContract;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
 
-public class CreateDropActivity extends ActionBarActivity
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class CreateDropActivity extends ActionBarActivity {
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -28,7 +23,7 @@ public class CreateDropActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_drop);
 
-        mGoogleApiClient = buildGoogleApiClient();
+        mGoogleApiClient = Utility.buildGoogleApiClient(this);
         mGoogleApiClient.connect();
     }
 
@@ -68,44 +63,15 @@ public class CreateDropActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void onConnected(Bundle bundle) {
-        Toast.makeText(this, "Connected!", Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Toast.makeText(this, "Connection suspended!", Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Toast.makeText(this, "Connection failed!", Toast.LENGTH_LONG).show();
-    }
-
     public void createDrop(View view) {
         EditText latitudeEditText = (EditText)findViewById(R.id.latitude);
         EditText longitudeEditText = (EditText)findViewById(R.id.longitude);
         EditText dropTextEditText = (EditText)findViewById(R.id.drop_text);
 
-        double latitude = Double.parseDouble(latitudeEditText.getText().toString());
-        double longitude = Double.parseDouble(longitudeEditText.getText().toString());
-        String dropText = dropTextEditText.getText().toString();
+        String latitude = latitudeEditText.getText().toString();
+        String longitude = longitudeEditText.getText().toString();
+        String text = dropTextEditText.getText().toString();
 
-        ContentValues values = new ContentValues();
-        values.put(DropContract.DropEntry.COLUMN_LATITUDE, latitude);
-        values.put(DropContract.DropEntry.COLUMN_LONGITUDE, longitude);
-        values.put(DropContract.DropEntry.COLUMN_DROP_TEXT, dropText);
-
-        Uri uri = DropContract.DropEntry.CONTENT_URI;
-        Uri recordUri = getContentResolver().insert(uri, values);
-        Toast.makeText(this, "Row created with ID: " + recordUri.getLastPathSegment(), Toast.LENGTH_SHORT).show();
-    }
-
-    protected synchronized GoogleApiClient buildGoogleApiClient() {
-        return new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+        new CreateDropTask().execute(latitude, longitude, text);
     }
 }

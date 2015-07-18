@@ -8,6 +8,7 @@
     <string name="drop_text">Text:</string>
     <string name="create">Create</string>
     <string name="content_authority">com.example.drop.drop.app</string>
+    <string name="sync_account_type">drop.app.example.com</string>
     <string name="action_settings">Settings</string>
     <string name="action_next">Next</string>
     <string name="action_coordinates">Get Coordinates</string>
