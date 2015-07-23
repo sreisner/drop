@@ -1,49 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.drop.drop" >
-
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    package="com.example.drop.drop">
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyC_wWf75AV7oHBU02V_wLIXZKwssOdwQgE" />
-
-        <uses-library android:name="com.google.android.maps" />
+        android:theme="@style/AppTheme">
 
         <activity
             android:name=".CreateDropActivity"
-            android:label="@string/title_activity_create_drop" >
+            android:label="@string/title_activity_create_drop">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".CreateDropActivity" />
+        </activity>
+
+        <activity
+            android:name=".DropMapActivity"
+            android:label="@string/title_activity_drop_map">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".DropMapActivity"
-            android:label="@string/title_activity_drop_map" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".CreateDropActivity" />
-        </activity>
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyC_wWf75AV7oHBU02V_wLIXZKwssOdwQgE" />
 
-        <service
-            android:name=".sync.DropAuthenticatorService">
+        <provider
+            android:authorities="@string/content_authority"
+            android:exported="false"
+            android:name=".data.DropProvider"
+            android:syncable="true" />
+
+        <service android:name=".sync.DropAuthenticatorService">
             <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator"/>
+                <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
@@ -53,8 +49,7 @@
         <service
             android:name=".sync.DropSyncService"
             android:exported="true"
-            android:process=":sync"
-            >
+            android:process=":sync">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
@@ -63,13 +58,15 @@
                 android:resource="@xml/syncadapter" />
         </service>
 
-        <provider
-            android:name=".data.DropProvider"
-            android:authorities="@string/content_authority"
-            android:exported="false"
-            android:syncable="true" >
-        </provider>
+        <uses-library android:name="com.google.android.maps" />
 
     </application>
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
 </manifest>
