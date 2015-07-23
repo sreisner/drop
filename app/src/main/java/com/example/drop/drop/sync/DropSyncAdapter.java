@@ -7,10 +7,8 @@ import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SyncRequest;
 import android.content.SyncResult;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -36,10 +34,6 @@ import java.io.IOException;
 public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final String LOG_TAG = DropSyncAdapter.class.getName();
 
-    // Download periodically every 30 minutes.
-    public static final int SYNC_INTERVAL = 60 * 30;
-    public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
-
     public static final double DISCOVER_RADIUS_METERS = 100;
     public static final double DOWNLOAD_BOUNDARY_METERS = DISCOVER_RADIUS_METERS * 3;
 
@@ -57,6 +51,8 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
+        Log.d(LOG_TAG, "onPerformSync");
+
         double latitude;
         double longitude;
         Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -105,6 +101,8 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
             Log.d(LOG_TAG, e.getMessage());
             return;
         }
+
+        mContentResolver.notifyChange(DropContract.DropEntry.CONTENT_URI, null);
     }
 
     public static void syncImmediately(Context context) {
@@ -115,34 +113,6 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
                 context.getString(R.string.content_authority), bundle);
     }
 
-    public static void configurePeriodicSync(Context context, int syncInterval, int flexTime) {
-        Account account = getSyncAccount(context);
-        String authority = context.getString(R.string.content_authority);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            // we can enable inexact timers in our periodic sync
-            SyncRequest request = new SyncRequest.Builder().
-                    syncPeriodic(syncInterval, flexTime).
-                    setSyncAdapter(account, authority).
-                    setExtras(new Bundle()).build();
-            ContentResolver.requestSync(request);
-        } else {
-            ContentResolver.addPeriodicSync(
-                    account,
-                    authority,
-                    new Bundle(),
-                    syncInterval);
-        }
-    }
-
-    private static void onAccountCreated(Account newAccount, Context context) {
-        DropSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
-
-        ContentResolver.setSyncAutomatically(newAccount, context.getString(R.string.content_authority), true);
-
-        syncImmediately(context);
-    }
-
     public static Account getSyncAccount(Context context) {
         AccountManager accountManager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
 
@@ -151,7 +121,6 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
             if (!accountManager.addAccountExplicitly(newAccount, "", null)) {
                 return null;
             }
-            onAccountCreated(newAccount, context);
 
         }
         return newAccount;
@@ -159,5 +128,6 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
 
     public static void initializeSyncAdapter(Context context) {
         getSyncAccount(context);
+        syncImmediately(context);
     }
 }

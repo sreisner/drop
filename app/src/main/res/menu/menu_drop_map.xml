@@ -5,9 +5,16 @@
     tools:context="com.example.drop.drop.DropMapActivity">
 
     <item
+        android:id="@+id/action_scan"
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:orderInCategory="1"
+        android:title="@string/action_scan"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_create"
         android:icon="@android:drawable/ic_input_add"
-        android:orderInCategory="1"
+        android:orderInCategory="2"
         android:title="@string/action_create"
         app:showAsAction="ifRoom" />
 

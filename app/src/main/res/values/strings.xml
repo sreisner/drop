@@ -16,4 +16,5 @@
     <string name="title_activity_drop_map">DropMapActivity</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="action_scan">Scan</string>
 </resources>

@@ -1,11 +1,14 @@
 package com.example.drop.drop;
 
+import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,31 +28,30 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class DropMapActivity extends ActionBarActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks {
-
+public class DropMapActivity extends AppCompatActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks, LoaderManager.LoaderCallbacks<Cursor> {
     private static final String LOG_TAG = DropMapActivity.class.getName();
+
+    private static final float DEFAULT_ZOOM_LEVEL = 17;
+
+    private static final int DROP_LOADER_ID = 0;
 
     public static final double DEFAULT_LATITUDE = 41.930853;
     public static final double DEFAULT_LONGITUDE = -87.641325;
-
-    private static final float DEFAULT_ZOOM_LEVEL = 17;
 
     public static final int COL_DROP_ID = 0;
     public static final int COL_DROP_LATITUDE = 1;
     public static final int COL_DROP_LONGITUDE = 2;
     public static final int COL_DROP_TEXT = 3;
 
-    private Cursor drops;
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap map;
+    private DropCursorAdapter mCursorAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_drop_map);
-
-        drops = getDropsWithinDiscoverableRadius();
 
         mGoogleApiClient = Utility.buildGoogleApiClient(this);
         mGoogleApiClient.registerConnectionCallbacks(this);
@@ -59,39 +61,29 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        ListView dropListView = (ListView)findViewById(R.id.drop_list);
-        dropListView.setAdapter(new DropCursorAdapter(this, drops, 0));
+        mCursorAdapter = new DropCursorAdapter(this, null, 0);
+
+        ListView dropListView = (ListView) findViewById(R.id.drop_list);
+        dropListView.setAdapter(mCursorAdapter);
 
         dropListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Cursor data = (Cursor) parent.getAdapter().getItem(position);
+                Cursor data = (Cursor) mCursorAdapter.getItem(position);
                 double latitude = data.getDouble(COL_DROP_LATITUDE);
                 double longitude = data.getDouble(COL_DROP_LONGITUDE);
                 mapFragment.getMap().animateCamera(CameraUpdateFactory.newLatLng(new LatLng(latitude, longitude)));
-                mapFragment.getMap().animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM_LEVEL));
             }
         });
 
-        DropSyncAdapter.initializeSyncAdapter(this);
+        getLoaderManager().initLoader(DROP_LOADER_ID, null, this);
+
+        DropSyncAdapter.syncImmediately(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-    }
-
-    private Cursor getDropsWithinDiscoverableRadius() {
-        Uri dropUri = DropContract.DropEntry.CONTENT_URI;
-        Cursor cursor = getContentResolver().query(
-                dropUri,
-                null,
-                null,
-                null,
-                null
-        );
-
-        return cursor;
     }
 
     @Override
@@ -110,9 +102,11 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        } else if(id == R.id.action_create) {
+        } else if (id == R.id.action_create) {
             Intent intent = new Intent(this, CreateDropActivity.class);
             startActivity(intent);
+        } else if(id == R.id.action_scan) {
+            DropSyncAdapter.syncImmediately(this);
         }
 
         return super.onOptionsItemSelected(item);
@@ -143,29 +137,51 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
                         .fillColor(0x110000ff)
                         .strokeWidth(0)
         );
-
-        // map.getUiSettings().setAllGesturesEnabled(false);
-
-        drops.moveToPosition(-1);
-        while(drops.moveToNext()) {
-            double latitude = drops.getDouble(DropMapActivity.COL_DROP_LATITUDE);
-            double longitude = drops.getDouble(DropMapActivity.COL_DROP_LONGITUDE);
-            String title = drops.getString(DropMapActivity.COL_DROP_TEXT);
-            LatLng position = new LatLng(latitude, longitude);
-            map.addMarker(new MarkerOptions()
-                            .position(position)
-                            .title(title)
-            );
-        }
     }
 
     @Override
     public void onConnected(Bundle bundle) {
         updateMap();
+        DropSyncAdapter.syncImmediately(this);
     }
 
     @Override
     public void onConnectionSuspended(int i) {
 
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (id == DROP_LOADER_ID) {
+            return new CursorLoader(
+                    this, DropContract.DropEntry.CONTENT_URI,
+                    null, null, null, null);
+        } else {
+            throw new UnsupportedOperationException("id not recognized");
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.d(LOG_TAG, "onLoadFinished!");
+        updateMap();
+
+        while (data.moveToNext()) {
+            double latitude = data.getDouble(DropMapActivity.COL_DROP_LATITUDE);
+            double longitude = data.getDouble(DropMapActivity.COL_DROP_LONGITUDE);
+            String title = data.getString(DropMapActivity.COL_DROP_TEXT);
+            LatLng position = new LatLng(latitude, longitude);
+            map.addMarker(new MarkerOptions()
+                            .position(position)
+                            .title(title));
+        }
+
+        data.moveToPosition(-1);
+        mCursorAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        mCursorAdapter.swapCursor(null);
     }
 }
