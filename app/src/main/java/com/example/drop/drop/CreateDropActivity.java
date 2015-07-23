@@ -1,6 +1,5 @@
 package com.example.drop.drop;
 
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -44,9 +43,6 @@ public class CreateDropActivity extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        } else if(id == R.id.action_next) {
-            Intent intent = new Intent(this, DropMapActivity.class);
-            startActivity(intent);
         } else if(id == R.id.action_coordinates) {
             Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 

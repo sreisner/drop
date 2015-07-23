@@ -1,11 +1,11 @@
 package com.example.drop.drop;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -47,8 +47,6 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.d(LOG_TAG, "DropMapActivity.onCreate");
-
         setContentView(R.layout.activity_drop_map);
 
         drops = getDropsWithinDiscoverableRadius();
@@ -71,6 +69,7 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
                 double latitude = data.getDouble(COL_DROP_LATITUDE);
                 double longitude = data.getDouble(COL_DROP_LONGITUDE);
                 mapFragment.getMap().animateCamera(CameraUpdateFactory.newLatLng(new LatLng(latitude, longitude)));
+                mapFragment.getMap().animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM_LEVEL));
             }
         });
 
@@ -97,7 +96,6 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_drop_map, menu);
         return true;
     }
@@ -112,6 +110,9 @@ public class DropMapActivity extends ActionBarActivity implements OnMapReadyCall
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        } else if(id == R.id.action_create) {
+            Intent intent = new Intent(this, CreateDropActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
