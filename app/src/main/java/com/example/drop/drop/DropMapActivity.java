@@ -163,7 +163,6 @@ public class DropMapActivity extends AppCompatActivity implements OnMapReadyCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.d(LOG_TAG, "onLoadFinished!");
         updateMap();
 
         while (data.moveToNext()) {
@@ -175,8 +174,7 @@ public class DropMapActivity extends AppCompatActivity implements OnMapReadyCall
                             .position(position)
                             .title(title));
         }
-
-        data.moveToPosition(-1);
+        
         mCursorAdapter.swapCursor(data);
     }
 
