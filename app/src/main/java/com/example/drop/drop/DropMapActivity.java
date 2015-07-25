@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -168,9 +167,9 @@ public class DropMapActivity extends AppCompatActivity implements OnMapReadyCall
         updateMap();
 
         while (data.moveToNext()) {
-            double latitude = data.getDouble(DropMapActivity.COL_DROP_LATITUDE);
-            double longitude = data.getDouble(DropMapActivity.COL_DROP_LONGITUDE);
-            String title = data.getString(DropMapActivity.COL_DROP_TEXT);
+            double latitude = data.getDouble(COL_DROP_LATITUDE);
+            double longitude = data.getDouble(COL_DROP_LONGITUDE);
+            String title = data.getString(COL_DROP_TEXT);
             LatLng position = new LatLng(latitude, longitude);
             map.addMarker(new MarkerOptions()
                             .position(position)
