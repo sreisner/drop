@@ -121,22 +121,24 @@ public class DropMapActivity extends AppCompatActivity implements OnMapReadyCall
     private void updateMap() {
         map.clear();
 
-        LatLng lastKnownLocation;
-
-        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (lastLocation != null) {
-            lastKnownLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-        } else {
-            lastKnownLocation = new LatLng(DEFAULT_LATITUDE, DEFAULT_LONGITUDE);
-        }
+        LatLng lastKnownLocation = getLastKnownLocation();
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation, DEFAULT_ZOOM_LEVEL));
 
         map.addCircle(new CircleOptions()
                         .center(lastKnownLocation)
                         .radius(DropSyncAdapter.DISCOVER_RADIUS_METERS)
-                        .fillColor(0x110000ff)
+                        .fillColor(R.color.drop_blue)
                         .strokeWidth(0)
         );
+    }
+
+    private LatLng getLastKnownLocation() {
+        Location lastKnownLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (lastKnownLocation != null) {
+            return new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+        } else {
+            return new LatLng(DEFAULT_LATITUDE, DEFAULT_LONGITUDE);
+        }
     }
 
     @Override
