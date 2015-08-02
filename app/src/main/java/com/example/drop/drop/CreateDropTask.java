@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateDropTask extends AsyncTask<String, Integer, Long> {
-    private static final String LOG_TAG = CreateDropTask.class.getName();
+    private static final String LOG_TAG = CreateDropTask.class.getSimpleName();
 
     @Override
     protected Long doInBackground(String... params) {

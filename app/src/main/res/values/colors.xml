@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="drop_blue">0x110000FF</color>
+    <color name="drop_green">#12A22B</color>
+    <color name="drop_blue">#107482</color>
+    <color name="drop_red">#D42517</color>
+    <color name="drop_orange">#D47217</color>
+
+    <color name="discover_circle_color">#66107482</color>
 </resources>

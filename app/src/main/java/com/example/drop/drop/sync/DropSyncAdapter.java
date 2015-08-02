@@ -8,16 +8,13 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SyncResult;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.example.drop.drop.DropMapActivity;
 import com.example.drop.drop.R;
 import com.example.drop.drop.Utility;
 import com.example.drop.drop.data.DropContract;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -32,7 +29,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
-    private static final String LOG_TAG = DropSyncAdapter.class.getName();
+    private static final String LOG_TAG = DropSyncAdapter.class.getSimpleName();
 
     public static final double DISCOVER_RADIUS_METERS = 100;
     public static final double DOWNLOAD_BOUNDARY_METERS = DISCOVER_RADIUS_METERS * 3;
@@ -44,6 +41,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
         super(context, autoInitialize);
 
         mContentResolver = context.getContentResolver();
+
         mGoogleApiClient = Utility.buildGoogleApiClient(context);
         mGoogleApiClient.connect();
     }
@@ -51,18 +49,11 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
-        Log.d(LOG_TAG, "onPerformSync");
 
-        double latitude;
-        double longitude;
-        Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (lastLocation != null) {
-            latitude = lastLocation.getLatitude();
-            longitude = lastLocation.getLongitude();
-        } else {
-            latitude = DropMapActivity.DEFAULT_LATITUDE;
-            longitude = DropMapActivity.DEFAULT_LONGITUDE;
-        }
+        Log.d(LOG_TAG, "Performing sync.");
+
+        double latitude = extras.getDouble("latitude");
+        double longitude = extras.getDouble("longitude");
 
         double minLatitude = Utility.getOffsetLatitude(latitude, -DOWNLOAD_BOUNDARY_METERS);
         double maxLatitude = Utility.getOffsetLatitude(latitude, DOWNLOAD_BOUNDARY_METERS);
@@ -105,10 +96,11 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
         mContentResolver.notifyChange(DropContract.DropEntry.CONTENT_URI, null);
     }
 
-    public static void syncImmediately(Context context) {
+    public static void syncImmediately(Context context, Bundle locationBundle) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        bundle.putAll(locationBundle);
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getString(R.string.content_authority), bundle);
     }
@@ -121,13 +113,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
             if (!accountManager.addAccountExplicitly(newAccount, "", null)) {
                 return null;
             }
-
         }
         return newAccount;
-    }
-
-    public static void initializeSyncAdapter(Context context) {
-        getSyncAccount(context);
-        syncImmediately(context);
     }
 }
