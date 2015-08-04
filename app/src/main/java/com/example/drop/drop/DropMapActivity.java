@@ -37,14 +37,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 
 public class DropMapActivity extends AppCompatActivity
-                             implements GoogleApiClient.ConnectionCallbacks,
-                                        LoaderManager.LoaderCallbacks<Cursor>,
-                                        OnMapReadyCallback,
-                                        LocationListener
-{
+        implements GoogleApiClient.ConnectionCallbacks,
+        LoaderManager.LoaderCallbacks<Cursor>,
+        OnMapReadyCallback,
+        LocationListener {
     private static final String LOG_TAG = DropMapActivity.class.getSimpleName();
 
     private static final float DEFAULT_ZOOM_LEVEL = 17;
+    private static final float REQUIRED_ACCURACY_METERS = 50;
+
     private static final int DROP_LOADER_ID = 0;
     private static final int ENABLE_LOCATION_RESULT_CODE = 0;
 
@@ -52,8 +53,6 @@ public class DropMapActivity extends AppCompatActivity
     public static final int COL_DROP_LATITUDE = 1;
     public static final int COL_DROP_LONGITUDE = 2;
     public static final int COL_DROP_TEXT = 3;
-
-    private Menu mMenu;
 
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap mGoogleMap;
@@ -79,19 +78,14 @@ public class DropMapActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        mMenu = menu;
         getMenuInflater().inflate(R.menu.menu_drop_map, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.action_create) {
@@ -161,7 +155,7 @@ public class DropMapActivity extends AppCompatActivity
         Log.d(LOG_TAG, "Finished downloading leaf data.");
         updateMapLocation();
 
-        if(mGoogleMap != null) {
+        if (mGoogleMap != null) {
             while (data.moveToNext()) {
                 double leafLatitude = data.getDouble(COL_DROP_LATITUDE);
                 double leafLongitude = data.getDouble(COL_DROP_LONGITUDE);
@@ -175,7 +169,8 @@ public class DropMapActivity extends AppCompatActivity
         }
 
         mCursorAdapter.swapCursor(data);
-        disableScan();
+        mScanInProgress = false;
+        mScanningDialog.hide();
     }
 
     @Override
@@ -211,41 +206,26 @@ public class DropMapActivity extends AppCompatActivity
     private void scan() {
         if (!isLocationEnabled()) {
             showEnableLocationDialog();
-        } else if(canScan()) {
-            enableScan();
+        } else if (canScan()) {
+            mScanInProgress = true;
+            mScanningDialog.show();
+            enableLocationUpdates();
         }
     }
 
-    private void setScanButtonEnabled(boolean enabled) {
-        if (mMenu != null) {
-            MenuItem scanButton = mMenu.findItem(R.id.action_scan);
-            if (scanButton != null) {
-                scanButton.setEnabled(enabled);
-            }
+    private void enableLocationUpdates() {
+        if (mGoogleApiClient.isConnected()) {
+            LocationRequest locationRequest = new LocationRequest();
+            locationRequest.setInterval(10000);
+            locationRequest.setFastestInterval(5000);
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, locationRequest, this);
         }
     }
 
-    private void enableScan() {
-        mScanInProgress = true;
-        setScanButtonEnabled(false);
-        mScanningDialog.show();
-
-        LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, locationRequest, this);
-    }
-
-    private void disableScan() {
-        if(mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
-        mScanInProgress = false;
-        mScanningDialog.hide();
-        setScanButtonEnabled(true);
+    private void disableLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
     }
 
     private boolean canScan() {
@@ -259,13 +239,14 @@ public class DropMapActivity extends AppCompatActivity
     @Override
     public void onLocationChanged(Location location) {
         Log.d(LOG_TAG, "Location changed! " + location);
-        if(location != null && isInitialized()) {
-            Log.d(LOG_TAG, "Valid location found.");
+        if (location != null && location.hasAccuracy() &&
+                location.getAccuracy() < REQUIRED_ACCURACY_METERS && isInitialized()) {
             mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
             Bundle bundle = new Bundle();
             bundle.putDouble("latitude", location.getLatitude());
             bundle.putDouble("longitude", location.getLongitude());
             DropSyncAdapter.syncImmediately(this, bundle);
+            disableLocationUpdates();
         }
     }
 
@@ -296,22 +277,21 @@ public class DropMapActivity extends AppCompatActivity
                     }
                 });
 
-        AlertDialog dialog =  builder.create();
+        AlertDialog dialog = builder.create();
         dialog.show();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == ENABLE_LOCATION_RESULT_CODE && resultCode == RESULT_OK) {
+        if (requestCode == ENABLE_LOCATION_RESULT_CODE) {
             scan();
         }
     }
-
 
     private boolean isLocationEnabled() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
         return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
-               locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 }
