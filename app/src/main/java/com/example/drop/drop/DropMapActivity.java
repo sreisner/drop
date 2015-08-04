@@ -169,10 +169,11 @@ public class DropMapActivity extends AppCompatActivity
 
         if(mGoogleMap != null) {
             while (data.moveToNext()) {
-                double latitude = data.getDouble(COL_DROP_LATITUDE);
-                double longitude = data.getDouble(COL_DROP_LONGITUDE);
+                double leafLatitude = data.getDouble(COL_DROP_LATITUDE);
+                double leafLongitude = data.getDouble(COL_DROP_LONGITUDE);
                 String title = data.getString(COL_DROP_TEXT);
-                LatLng position = new LatLng(latitude, longitude);
+                LatLng position = new LatLng(leafLatitude, leafLongitude);
+
                 mGoogleMap.addMarker(new MarkerOptions()
                         .position(position)
                         .title(title));

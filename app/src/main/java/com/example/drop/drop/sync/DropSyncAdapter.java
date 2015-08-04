@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SyncResult;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -52,13 +53,13 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
 
         Log.d(LOG_TAG, "Performing sync.");
 
-        double latitude = extras.getDouble("latitude");
-        double longitude = extras.getDouble("longitude");
+        double currentLatitude = extras.getDouble("latitude");
+        double currentLongitude = extras.getDouble("longitude");
 
-        double minLatitude = Utility.getOffsetLatitude(latitude, -DOWNLOAD_BOUNDARY_METERS);
-        double maxLatitude = Utility.getOffsetLatitude(latitude, DOWNLOAD_BOUNDARY_METERS);
-        double minLongitude = Utility.getOffsetLongitude(latitude, longitude, -DOWNLOAD_BOUNDARY_METERS);
-        double maxLongitude = Utility.getOffsetLongitude(latitude, longitude, DOWNLOAD_BOUNDARY_METERS);
+        double minLatitude = Utility.getOffsetLatitude(currentLatitude, -DOWNLOAD_BOUNDARY_METERS);
+        double maxLatitude = Utility.getOffsetLatitude(currentLatitude, DOWNLOAD_BOUNDARY_METERS);
+        double minLongitude = Utility.getOffsetLongitude(currentLatitude, currentLongitude, -DOWNLOAD_BOUNDARY_METERS);
+        double maxLongitude = Utility.getOffsetLongitude(currentLatitude, currentLongitude, DOWNLOAD_BOUNDARY_METERS);
 
         HttpClient client = new DefaultHttpClient();
         String baseUrl = "http://drop-web-service.appspot.com/drop?minLat=%f&maxLat=%f&minLong=%f&maxLong=%f";
@@ -82,11 +83,23 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
             Log.d(LOG_TAG, "Syncing " + dropJsonList.length() + " drops.");
             for(int i=0; i<dropJsonList.length(); i++) {
                 JSONObject obj = dropJsonList.getJSONObject(i);
-                ContentValues values = new ContentValues();
-                values.put(DropContract.DropEntry.COLUMN_LATITUDE, obj.getString("latitude"));
-                values.put(DropContract.DropEntry.COLUMN_LONGITUDE, obj.getString("longitude"));
-                values.put(DropContract.DropEntry.COLUMN_DROP_TEXT, obj.getString("text"));
-                mContentResolver.insert(DropContract.DropEntry.CONTENT_URI, values);
+                double leafLatitude = obj.getDouble("latitude");
+                double leafLongitude = obj.getDouble("longitude");
+
+                float[] results = new float[1];
+                Location.distanceBetween(
+                        currentLatitude, currentLongitude,
+                        leafLatitude, leafLongitude,
+                        results);
+
+                float distance = results[0];
+                if(distance <= DropSyncAdapter.DISCOVER_RADIUS_METERS) {
+                    ContentValues values = new ContentValues();
+                    values.put(DropContract.DropEntry.COLUMN_LATITUDE, obj.getString("latitude"));
+                    values.put(DropContract.DropEntry.COLUMN_LONGITUDE, obj.getString("longitude"));
+                    values.put(DropContract.DropEntry.COLUMN_DROP_TEXT, obj.getString("text"));
+                    mContentResolver.insert(DropContract.DropEntry.CONTENT_URI, values);
+                }
             }
         } catch(JSONException e) {
             Log.d(LOG_TAG, e.getMessage());
