@@ -78,12 +78,6 @@ public class DropMapActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(LOG_TAG, "onResume");
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         mMenu = menu;
         getMenuInflater().inflate(R.menu.menu_drop_map, menu);
