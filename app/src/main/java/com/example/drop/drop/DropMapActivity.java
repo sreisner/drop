@@ -53,6 +53,7 @@ public class DropMapActivity extends AppCompatActivity
     public static final int COL_DROP_LATITUDE = 1;
     public static final int COL_DROP_LONGITUDE = 2;
     public static final int COL_DROP_TEXT = 3;
+    public static final int COL_DROP_CREATED_ON = 4;
 
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap mGoogleMap;
@@ -153,7 +154,6 @@ public class DropMapActivity extends AppCompatActivity
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.d(LOG_TAG, "Finished downloading leaf data.");
-        updateMapLocation();
 
         if (mGoogleMap != null) {
             while (data.moveToNext()) {
@@ -164,7 +164,8 @@ public class DropMapActivity extends AppCompatActivity
 
                 mGoogleMap.addMarker(new MarkerOptions()
                         .position(position)
-                        .title(title));
+                        .title(title)
+                        .snippet("yo"));
             }
         }
 
@@ -242,6 +243,7 @@ public class DropMapActivity extends AppCompatActivity
         if (location != null && location.hasAccuracy() &&
                 location.getAccuracy() < REQUIRED_ACCURACY_METERS && isInitialized()) {
             mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+            updateMapLocation();
             Bundle bundle = new Bundle();
             bundle.putDouble("latitude", location.getLatitude());
             bundle.putDouble("longitude", location.getLongitude());

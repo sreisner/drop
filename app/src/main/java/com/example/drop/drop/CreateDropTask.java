@@ -13,7 +13,9 @@ import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class CreateDropTask extends AsyncTask<String, Integer, Long> {
@@ -27,11 +29,14 @@ public class CreateDropTask extends AsyncTask<String, Integer, Long> {
         String latitude = params[0];
         String longitude = params[1];
         String text = params[2];
+        // Tue Jun 22 13:07:00 PDT 1999
+        String currentDateTime = Calendar.getInstance().getTime().toString();
 
         List<NameValuePair> parameters = new ArrayList<NameValuePair>();
         parameters.add(new BasicNameValuePair("latitude", latitude));
         parameters.add(new BasicNameValuePair("longitude", longitude));
         parameters.add(new BasicNameValuePair("text", text));
+        parameters.add(new BasicNameValuePair("created_on", currentDateTime));
 
         try {
             request.setEntity(new UrlEncodedFormEntity(parameters));
