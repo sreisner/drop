@@ -18,8 +18,6 @@ import java.util.TimeZone;
 public class DropCursorAdapter extends CursorAdapter {
     private static final String LOG_TAG = DropCursorAdapter.class.getSimpleName();
 
-    private static final String DATE_FORMAT = "KK:mmaa', MMMM dd', yyyy";
-
     public DropCursorAdapter(Context context, Cursor c, int flags) {
         super(context, c, flags);
     }
@@ -37,30 +35,11 @@ public class DropCursorAdapter extends CursorAdapter {
         ViewHolder viewHolder = (ViewHolder)view.getTag();
         String dropText = cursor.getString(DropMapActivity.COL_DROP_TEXT);
         String createdOnString = cursor.getString(DropMapActivity.COL_DROP_CREATED_ON);
-        Date createdOn = parseDate(createdOnString);
-        String formattedDate = formatDate(createdOn);
+        Date createdOn = Utility.parseDate(createdOnString);
+        String formattedDate = Utility.formatDateForDisplay(createdOn);
 
         viewHolder.dropTextView.setText(dropText);
         viewHolder.createdOnTextView.setText(formattedDate);
-    }
-
-    private Date parseDate(String date) {
-        Date createdOn;
-
-        try {
-            createdOn = new SimpleDateFormat().parse(date);
-        } catch (ParseException e) {
-            Log.d(LOG_TAG, "Failed to parse date.", e);
-            createdOn = new Date(0);
-        }
-
-        return createdOn;
-    }
-
-    private String formatDate(Date date) {
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT, Locale.US);
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return formatter.format(date);
     }
 
     public static class ViewHolder {
@@ -69,7 +48,7 @@ public class DropCursorAdapter extends CursorAdapter {
 
         public ViewHolder(View view) {
             dropTextView = (TextView) view.findViewById(R.id.list_item_drop_textview);
-            createdOnTextView = (TextView) view.findViewById(R.id.list_item_createdon_textview);
+            createdOnTextView = (TextView) view.findViewById(R.id.list_item_created_on_textview);
         }
     }
 }

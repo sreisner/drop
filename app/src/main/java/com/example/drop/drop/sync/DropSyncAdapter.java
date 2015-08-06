@@ -28,6 +28,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final String LOG_TAG = DropSyncAdapter.class.getSimpleName();
@@ -85,6 +87,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
                 JSONObject obj = dropJsonList.getJSONObject(i);
                 double leafLatitude = obj.getDouble("latitude");
                 double leafLongitude = obj.getDouble("longitude");
+                String leafCreatedOn = obj.getString("created_on");
 
                 float[] results = new float[1];
                 Location.distanceBetween(
@@ -98,6 +101,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
                     values.put(DropContract.DropEntry.COLUMN_LATITUDE, obj.getString("latitude"));
                     values.put(DropContract.DropEntry.COLUMN_LONGITUDE, obj.getString("longitude"));
                     values.put(DropContract.DropEntry.COLUMN_DROP_TEXT, obj.getString("text"));
+                    values.put(DropContract.DropEntry.COLUMN_CREATED_ON, leafCreatedOn);
                     mContentResolver.insert(DropContract.DropEntry.CONTENT_URI, values);
                 }
             }

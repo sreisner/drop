@@ -25,7 +25,7 @@ public class DropDbHelper extends SQLiteOpenHelper {
                 DropContract.DropEntry.COLUMN_LATITUDE + " REAL NOT NULL, " +
                 DropContract.DropEntry.COLUMN_LONGITUDE + " REAL NOT NULL, " +
                 DropContract.DropEntry.COLUMN_DROP_TEXT + " TEXT NULL, " +
-                DropContract.DropEntry.COLUMN_CREATED_ON + " DATE NOT NULL);";
+                DropContract.DropEntry.COLUMN_CREATED_ON + " DATETIME NULL);";
 
         db.execSQL(SQL_CREATE_DROP_TABLE);
     }
