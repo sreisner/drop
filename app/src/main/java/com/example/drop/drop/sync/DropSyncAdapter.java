@@ -28,13 +28,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final String LOG_TAG = DropSyncAdapter.class.getSimpleName();
 
-    public static final double DISCOVER_RADIUS_METERS = 100;
+    public static final double DISCOVER_RADIUS_METERS = 10000;
     public static final double DOWNLOAD_BOUNDARY_METERS = DISCOVER_RADIUS_METERS * 3;
 
     private ContentResolver mContentResolver;

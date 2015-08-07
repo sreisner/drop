@@ -16,7 +16,7 @@ public class Utility {
     private static String LOG_TAG = Utility.class.getSimpleName();
 
     private static int EARTHS_RADIUS = 6378137;
-    private static final String DISPLAY_DATE_FORMAT = "KK:mmaa', MMMM dd', yyyy";
+    private static final String DISPLAY_DATE_FORMAT = "K:mmaa -  MMMM dd, yyyy";
     private static final String DB_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static synchronized GoogleApiClient buildGoogleApiClient(Context context) {

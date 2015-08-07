@@ -164,8 +164,7 @@ public class DropMapActivity extends AppCompatActivity
 
                 mGoogleMap.addMarker(new MarkerOptions()
                         .position(position)
-                        .title(title)
-                        .snippet("yo"));
+                        .title(title));
             }
         }
 
