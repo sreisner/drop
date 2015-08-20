@@ -63,6 +63,8 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
             drops = new ArrayList<>();
         }
 
+        mContentResolver.delete(DropContract.DropEntry.CONTENT_URI, null, null);
+
         Log.d(LOG_TAG, "Found " + drops.size() + " drops.  Inserting...");
         for(Drop drop : drops) {
             float[] results = new float[1];
