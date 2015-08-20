@@ -22,17 +22,10 @@ import static com.example.drop.drop.backend.OfyService.ofy;
 public class DropEndpoint {
 
     @ApiMethod(name = "create")
-    public Drop create(@Named("latitude") float latitude,
-                       @Named("longitude") float longitude,
-                       @Named("caption") String caption) {
-        Drop response = new Drop();
-        response.setLocation(new GeoPt(latitude, longitude));
-        response.setCaption(caption);
-        response.setCreatedOnUTCSeconds(new Date().getTime());
-
-        ofy().save().entity(response).now();
-
-        return response;
+    public Drop create(Drop toCreate) {
+        toCreate.setCreatedOnUTCSeconds(new Date().getTime());
+        ofy().save().entity(toCreate).now();
+        return toCreate;
     }
 
     @ApiMethod(name = "getDropsInRectangle")

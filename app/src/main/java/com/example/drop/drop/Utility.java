@@ -8,7 +8,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,7 +35,7 @@ public class Utility {
 
     public static DropApi getDropBackendApiService() {
         HttpTransport transport = AndroidHttp.newCompatibleTransport();
-        JsonFactory jsonFactory = new AndroidJsonFactory();
+        AndroidJsonFactory jsonFactory = new AndroidJsonFactory();
         return new DropApi.Builder(transport, jsonFactory, null)
                 .setRootUrl("https://drop-web-service.appspot.com/_ah/api/")
                 .setServicePath("dropApi/v1/")

@@ -1,23 +1,36 @@
 package com.example.drop.drop;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.appspot.drop_web_service.dropApi.model.Drop;
+import com.appspot.drop_web_service.dropApi.model.GeoPt;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+
+import java.io.ByteArrayOutputStream;
 
 
 public class CreateDropActivity extends ActionBarActivity {
     private static final String LOG_TAG =  CreateDropActivity.class.getSimpleName();
 
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+
     private GoogleApiClient mGoogleApiClient;
+    private Bitmap mImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +74,21 @@ public class CreateDropActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            mImage = (Bitmap) extras.get("data");
+
+            Button takePictureButton = (Button)findViewById(R.id.start_camera_button);
+            ImageView imageThumbnail = (ImageView)findViewById(R.id.image_thumbnail);
+            imageThumbnail.setImageBitmap(mImage);
+
+            takePictureButton.setVisibility(View.GONE);
+            imageThumbnail.setVisibility(View.VISIBLE);
+        }
+    }
+
     private String getLatitudeText() {
         EditText latitudeEditText = (EditText)findViewById(R.id.latitude);
         return latitudeEditText.getText().toString();
@@ -76,11 +104,33 @@ public class CreateDropActivity extends ActionBarActivity {
         return captionEditText.getText().toString();
     }
 
+    private byte[] getImageData() {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        mImage.compress(Bitmap.CompressFormat.PNG, 0, stream);
+        return stream.toByteArray();
+    }
+
+    public void dispatchCameraIntent(View view) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
     public void createDrop(View view) {
         Log.d(LOG_TAG, "Creating drop...");
 
         CreateDropTask task = new CreateDropTask();
-        task.execute(getLatitudeText(), getLongitudeText(), getCaption());
+        Drop toCreate = new Drop();
+        GeoPt location = new GeoPt()
+                .setLatitude(Float.parseFloat(getLatitudeText()))
+                .setLongitude(Float.parseFloat(getLongitudeText()));
+        toCreate.setLocation(location);
+        toCreate.setCaption(getCaption());
+
+        toCreate.setImage(new String(getImageData()));
+
+        task.execute(toCreate);
 
         finish();
     }

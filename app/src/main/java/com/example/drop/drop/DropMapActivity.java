@@ -44,10 +44,11 @@ public class DropMapActivity extends AppCompatActivity
     private static final String LOG_TAG = DropMapActivity.class.getSimpleName();
 
     private static final float DEFAULT_ZOOM_LEVEL = 17;
-    private static final float REQUIRED_ACCURACY_METERS = 50;
+    private static final float REQUIRED_ACCURACY_METERS = 250;
 
     private static final int DROP_LOADER_ID = 0;
     private static final int ENABLE_LOCATION_RESULT_CODE = 0;
+    private static final int CREATE_DROP_RESULT_CODE = 1;
 
     public static final int COLUMN_DROP_ID = 0;
     public static final int COLUMN_DROP_LATITUDE = 1;
@@ -91,7 +92,7 @@ public class DropMapActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.action_create) {
             Intent intent = new Intent(this, CreateDropActivity.class);
-            startActivity(intent);
+            startActivityForResult(intent, CREATE_DROP_RESULT_CODE);
         } else if (id == R.id.action_scan) {
             scan();
         }
@@ -286,7 +287,9 @@ public class DropMapActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == ENABLE_LOCATION_RESULT_CODE) {
+        if (requestCode == ENABLE_LOCATION_RESULT_CODE && resultCode == RESULT_OK) {
+            scan();
+        } else if(requestCode == CREATE_DROP_RESULT_CODE && resultCode == RESULT_OK) {
             scan();
         }
     }

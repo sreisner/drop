@@ -71,6 +71,37 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/image_capture"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="@string/take_picture" />
+
+        <Button
+            android:id="@+id/start_camera_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:text="@string/open_camera"
+            android:onClick="dispatchCameraIntent" />
+
+        <ImageView
+            android:id="@+id/image_thumbnail"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_weight="3"
+            android:onClick="takePicture"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">

@@ -4,22 +4,22 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.appspot.drop_web_service.dropApi.DropApi;
+import com.appspot.drop_web_service.dropApi.model.Drop;
+import com.appspot.drop_web_service.dropApi.model.GeoPt;
 
 import java.io.IOException;
 
-public class CreateDropTask extends AsyncTask<String, Integer, Void> {
+public class CreateDropTask extends AsyncTask<Drop, Integer, Void> {
     private static final String LOG_TAG = CreateDropTask.class.getSimpleName();
 
     @Override
-    protected Void doInBackground(String... params) {
+    protected Void doInBackground(Drop... params) {
         DropApi service = Utility.getDropBackendApiService();
 
-        float latitude = Float.parseFloat(params[0]);
-        float longitude = Float.parseFloat(params[1]);
-        String caption = params[2];
+        Drop toCreate = params[0];
 
         try {
-            service.create(latitude, longitude, caption).execute();
+            service.create(toCreate).execute();
         } catch(IOException e) {
             Log.d(LOG_TAG, "Failed to create drop: " + e.getMessage());
         }

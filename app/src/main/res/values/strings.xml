@@ -6,6 +6,9 @@
     <string name="longitude">Longitude:</string>
     <string name="radius">Radius (km):</string>
     <string name="caption">Caption:</string>
+    <string name="take_picture">Image:</string>
+    <string name="open_camera">Camera</string>
+
     <string name="create">Create</string>
     <string name="content_authority">com.example.drop.drop.app</string>
     <string name="sync_account_type">drop.app.example.com</string>
