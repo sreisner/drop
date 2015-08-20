@@ -3,53 +3,27 @@ package com.example.drop.drop;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
+import com.appspot.drop_web_service.dropApi.DropApi;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 
-public class CreateDropTask extends AsyncTask<String, Integer, Long> {
+public class CreateDropTask extends AsyncTask<String, Integer, Void> {
     private static final String LOG_TAG = CreateDropTask.class.getSimpleName();
 
     @Override
-    protected Long doInBackground(String... params) {
-        HttpClient client = new DefaultHttpClient();
-        HttpPost request = new HttpPost("http://drop-web-service.appspot.com/drop");
+    protected Void doInBackground(String... params) {
+        DropApi service = Utility.getDropBackendApiService();
 
-        String latitude = params[0];
-        String longitude = params[1];
-        String text = params[2];
-        // Tue Jun 22 13:07:00 PDT 1999
-        String currentDateTime = Calendar.getInstance().getTime().toString();
-
-        List<NameValuePair> parameters = new ArrayList<NameValuePair>();
-        parameters.add(new BasicNameValuePair("latitude", latitude));
-        parameters.add(new BasicNameValuePair("longitude", longitude));
-        parameters.add(new BasicNameValuePair("text", text));
-        parameters.add(new BasicNameValuePair("created_on", currentDateTime));
+        float latitude = Float.parseFloat(params[0]);
+        float longitude = Float.parseFloat(params[1]);
+        String caption = params[2];
 
         try {
-            request.setEntity(new UrlEncodedFormEntity(parameters));
-        } catch(UnsupportedEncodingException e) {
-            Log.d(LOG_TAG, e.getMessage());
+            service.create(latitude, longitude, caption).execute();
+        } catch(IOException e) {
+            Log.d(LOG_TAG, "Failed to create drop: " + e.getMessage());
         }
 
-        try {
-            HttpResponse response = client.execute(request);
-            Log.d(LOG_TAG, "Created drop with ID: " + response.toString());
-        } catch (IOException e) {
-            Log.d(LOG_TAG, e.getMessage());
-        }
-        return (long)1;
+        return null;
     }
 }

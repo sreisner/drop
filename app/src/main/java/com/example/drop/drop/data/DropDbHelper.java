@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DropDbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     static final String DATABASE_NAME = "drop.db";
 
@@ -24,8 +24,8 @@ public class DropDbHelper extends SQLiteOpenHelper {
                 DropContract.DropEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 DropContract.DropEntry.COLUMN_LATITUDE + " REAL NOT NULL, " +
                 DropContract.DropEntry.COLUMN_LONGITUDE + " REAL NOT NULL, " +
-                DropContract.DropEntry.COLUMN_DROP_TEXT + " TEXT NULL, " +
-                DropContract.DropEntry.COLUMN_CREATED_ON + " DATETIME NULL);";
+                DropContract.DropEntry.COLUMN_CAPTION + " TEXT NULL, " +
+                DropContract.DropEntry.COLUMN_CREATED_ON + " INTEGER NULL);";
 
         db.execSQL(SQL_CREATE_DROP_TABLE);
     }

@@ -3,6 +3,7 @@ package com.example.drop.drop;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,6 +15,7 @@ import com.google.android.gms.location.LocationServices;
 
 
 public class CreateDropActivity extends ActionBarActivity {
+    private static final String LOG_TAG =  CreateDropActivity.class.getSimpleName();
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -59,15 +61,27 @@ public class CreateDropActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void createDrop(View view) {
+    private String getLatitudeText() {
         EditText latitudeEditText = (EditText)findViewById(R.id.latitude);
+        return latitudeEditText.getText().toString();
+    }
+
+    private String getLongitudeText() {
         EditText longitudeEditText = (EditText)findViewById(R.id.longitude);
-        EditText dropTextEditText = (EditText)findViewById(R.id.drop_text);
+        return longitudeEditText.getText().toString();
+    }
 
-        String latitude = latitudeEditText.getText().toString();
-        String longitude = longitudeEditText.getText().toString();
-        String text = dropTextEditText.getText().toString();
+    private String getCaption() {
+        EditText captionEditText = (EditText)findViewById(R.id.caption);
+        return captionEditText.getText().toString();
+    }
 
-        new CreateDropTask().execute(latitude, longitude, text);
+    public void createDrop(View view) {
+        Log.d(LOG_TAG, "Creating drop...");
+
+        CreateDropTask task = new CreateDropTask();
+        task.execute(getLatitudeText(), getLongitudeText(), getCaption());
+
+        finish();
     }
 }

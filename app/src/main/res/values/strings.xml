@@ -5,7 +5,7 @@
     <string name="latitude">Latitude:</string>
     <string name="longitude">Longitude:</string>
     <string name="radius">Radius (km):</string>
-    <string name="drop_text">Text:</string>
+    <string name="caption">Caption:</string>
     <string name="create">Create</string>
     <string name="content_authority">com.example.drop.drop.app</string>
     <string name="sync_account_type">drop.app.example.com</string>

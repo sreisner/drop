@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/list_item_drop_textview"
+        android:id="@+id/list_item_caption_textview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

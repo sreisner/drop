@@ -3,17 +3,10 @@ package com.example.drop.drop;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 public class DropCursorAdapter extends CursorAdapter {
     private static final String LOG_TAG = DropCursorAdapter.class.getSimpleName();
@@ -33,21 +26,20 @@ public class DropCursorAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder)view.getTag();
-        String dropText = cursor.getString(DropMapActivity.COL_DROP_TEXT);
-        String createdOnString = cursor.getString(DropMapActivity.COL_DROP_CREATED_ON);
-        Date createdOn = Utility.parseDate(createdOnString);
-        String formattedDate = Utility.formatDateForDisplay(createdOn);
+        String caption = cursor.getString(DropMapActivity.COLUMN_DROP_CAPTION);
+        long createdOnUTCSeconds = cursor.getLong(DropMapActivity.COLUMN_DROP_CREATED_ON);
+        String formattedDate = Utility.formatDateForDisplay(createdOnUTCSeconds);
 
-        viewHolder.dropTextView.setText(dropText);
+        viewHolder.captionTextView.setText(caption);
         viewHolder.createdOnTextView.setText(formattedDate);
     }
 
     public static class ViewHolder {
-        public final TextView dropTextView;
+        public final TextView captionTextView;
         public final TextView createdOnTextView;
 
         public ViewHolder(View view) {
-            dropTextView = (TextView) view.findViewById(R.id.list_item_drop_textview);
+            captionTextView = (TextView) view.findViewById(R.id.list_item_caption_textview);
             createdOnTextView = (TextView) view.findViewById(R.id.list_item_created_on_textview);
         }
     }

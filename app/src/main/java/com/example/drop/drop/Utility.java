@@ -1,12 +1,15 @@
 package com.example.drop.drop;
 
 import android.content.Context;
-import android.util.Log;
 
+import com.appspot.drop_web_service.dropApi.DropApi;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -17,7 +20,6 @@ public class Utility {
 
     private static int EARTHS_RADIUS = 6378137;
     private static final String DISPLAY_DATE_FORMAT = "K:mmaa -  MMMM dd, yyyy";
-    private static final String DB_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static synchronized GoogleApiClient buildGoogleApiClient(Context context) {
         return new GoogleApiClient.Builder(context)
@@ -25,32 +27,19 @@ public class Utility {
                 .build();
     }
 
-    public static double getOffsetLatitude(double latitude, double offsetMeters) {
-        double latDelta = offsetMeters / EARTHS_RADIUS;
-        return latitude + latDelta * 180 / Math.PI;
-    }
-
-    public static double getOffsetLongitude(double latitude, double longitude, double offsetMeters) {
-        double longDelta = offsetMeters / (EARTHS_RADIUS * Math.cos(Math.PI * latitude / 180));
-        return longitude + longDelta * 180 / Math.PI;
-    }
-
-    public static Date parseDate(String date) {
-        Date createdOn;
-
-        try {
-            createdOn = new SimpleDateFormat(DB_DATE_FORMAT).parse(date);
-        } catch (ParseException e) {
-            Log.d(LOG_TAG, "Failed to parse date.", e);
-            createdOn = new Date(0);
-        }
-
-        return createdOn;
-    }
-
-    public static String formatDateForDisplay(Date date) {
+    public static String formatDateForDisplay(long seconds) {
+        Date date = new Date(seconds);
         SimpleDateFormat formatter = new SimpleDateFormat(DISPLAY_DATE_FORMAT, Locale.US);
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        formatter.setTimeZone(TimeZone.getDefault());
         return formatter.format(date);
+    }
+
+    public static DropApi getDropBackendApiService() {
+        HttpTransport transport = AndroidHttp.newCompatibleTransport();
+        JsonFactory jsonFactory = new AndroidJsonFactory();
+        return new DropApi.Builder(transport, jsonFactory, null)
+                .setRootUrl("https://drop-web-service.appspot.com/_ah/api/")
+                .setServicePath("dropApi/v1/")
+                .build();
     }
 }

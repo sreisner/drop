@@ -49,11 +49,11 @@ public class DropMapActivity extends AppCompatActivity
     private static final int DROP_LOADER_ID = 0;
     private static final int ENABLE_LOCATION_RESULT_CODE = 0;
 
-    public static final int COL_DROP_ID = 0;
-    public static final int COL_DROP_LATITUDE = 1;
-    public static final int COL_DROP_LONGITUDE = 2;
-    public static final int COL_DROP_TEXT = 3;
-    public static final int COL_DROP_CREATED_ON = 4;
+    public static final int COLUMN_DROP_ID = 0;
+    public static final int COLUMN_DROP_LATITUDE = 1;
+    public static final int COLUMN_DROP_LONGITUDE = 2;
+    public static final int COLUMN_DROP_CAPTION = 3;
+    public static final int COLUMN_DROP_CREATED_ON = 4;
 
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap mGoogleMap;
@@ -112,8 +112,8 @@ public class DropMapActivity extends AppCompatActivity
                 if (mGoogleMap != null) {
                     Cursor data = (Cursor) mCursorAdapter.getItem(position);
 
-                    double latitude = data.getDouble(COL_DROP_LATITUDE);
-                    double longitude = data.getDouble(COL_DROP_LONGITUDE);
+                    double latitude = data.getDouble(COLUMN_DROP_LATITUDE);
+                    double longitude = data.getDouble(COLUMN_DROP_LONGITUDE);
                     LatLng location = new LatLng(latitude, longitude);
 
                     CameraUpdate update = CameraUpdateFactory.newLatLng(location);
@@ -153,18 +153,18 @@ public class DropMapActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.d(LOG_TAG, "Finished downloading leaf data.");
+        Log.d(LOG_TAG, "Finished downloading drop data.");
 
         if (mGoogleMap != null) {
             while (data.moveToNext()) {
-                double leafLatitude = data.getDouble(COL_DROP_LATITUDE);
-                double leafLongitude = data.getDouble(COL_DROP_LONGITUDE);
-                String title = data.getString(COL_DROP_TEXT);
-                LatLng position = new LatLng(leafLatitude, leafLongitude);
+                double latitude = data.getDouble(COLUMN_DROP_LATITUDE);
+                double longitude = data.getDouble(COLUMN_DROP_LONGITUDE);
+                String caption = data.getString(COLUMN_DROP_CAPTION);
+                LatLng position = new LatLng(latitude, longitude);
 
                 mGoogleMap.addMarker(new MarkerOptions()
                         .position(position)
-                        .title(title));
+                        .title(caption));
             }
         }
 
@@ -176,7 +176,9 @@ public class DropMapActivity extends AppCompatActivity
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         Log.d(LOG_TAG, "Loader reset.");
-        mCursorAdapter.swapCursor(null);
+        if(mCursorAdapter != null) {
+            mCursorAdapter.swapCursor(null);
+        }
     }
 
     @Override
