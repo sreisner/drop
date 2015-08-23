@@ -1,6 +1,6 @@
 package com.example.drop.drop.backend;
 
-import com.google.appengine.api.datastore.Blob;
+import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.datastore.GeoPt;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
@@ -8,12 +8,13 @@ import com.googlecode.objectify.annotation.Id;
 @Entity
 public class Drop {
     @Id
-    Long id;
+    public Long id;
 
     private GeoPt location;
     private String caption;
     private long createdOnUTCSeconds;
-    private Blob image;
+    private BlobKey imageKey;
+    private String uploadUrl;
 
     public GeoPt getLocation() {
         return location;
@@ -39,11 +40,19 @@ public class Drop {
         this.createdOnUTCSeconds = createdOnUTCSeconds;
     }
 
-    public Blob getImage() {
-        return image;
+    public BlobKey getImageKey() {
+        return imageKey;
     }
 
-    public void setImage(byte[] imageData) {
-        this.image = new Blob(imageData);
+    public void setImageKey(BlobKey imageKey) {
+        this.imageKey = imageKey;
+    }
+
+    public String getUploadUrl() {
+        return uploadUrl;
+    }
+
+    public void setUploadUrl(String uploadUrl) {
+        this.uploadUrl = uploadUrl;
     }
 }

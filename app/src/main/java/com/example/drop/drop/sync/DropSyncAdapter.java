@@ -54,7 +54,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
 
         List<Drop> drops = null;
         try {
-            drops = service.getDropsInRectangle().execute().getItems();
+            drops = service.get().execute().getItems();
         } catch(IOException e) {
             Log.d(LOG_TAG, "Failed to retrieve drops: " + e);
         }

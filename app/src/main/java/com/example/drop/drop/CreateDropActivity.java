@@ -13,7 +13,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.appspot.drop_web_service.dropApi.model.Drop;
@@ -127,8 +126,6 @@ public class CreateDropActivity extends ActionBarActivity {
                 .setLongitude(Float.parseFloat(getLongitudeText()));
         toCreate.setLocation(location);
         toCreate.setCaption(getCaption());
-
-        toCreate.setImage(new String(getImageData()));
 
         task.execute(toCreate);
 
