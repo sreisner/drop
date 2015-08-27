@@ -5,7 +5,7 @@ import com.google.appengine.api.datastore.GeoPt;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 
-@Entity
+@Entity()
 public class Drop {
     @Id
     public Long id;
@@ -14,7 +14,7 @@ public class Drop {
     private String caption;
     private long createdOnUTCSeconds;
     private BlobKey imageKey;
-    private String uploadUrl;
+    private String imageUploadUrl;
 
     public GeoPt getLocation() {
         return location;
@@ -46,13 +46,5 @@ public class Drop {
 
     public void setImageKey(BlobKey imageKey) {
         this.imageKey = imageKey;
-    }
-
-    public String getUploadUrl() {
-        return uploadUrl;
-    }
-
-    public void setUploadUrl(String uploadUrl) {
-        this.uploadUrl = uploadUrl;
     }
 }

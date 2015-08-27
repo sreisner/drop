@@ -2,7 +2,7 @@ package com.example.drop.drop;
 
 import android.content.Context;
 
-import com.appspot.drop_web_service.dropApi.DropApi;
+import com.example.drop.drop.backend.dropApi.DropAPI;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -33,10 +33,10 @@ public class Utility {
         return formatter.format(date);
     }
 
-    public static DropApi getDropBackendApiService() {
+    public static DropAPI getDropBackendApiService() {
         HttpTransport transport = AndroidHttp.newCompatibleTransport();
         AndroidJsonFactory jsonFactory = new AndroidJsonFactory();
-        return new DropApi.Builder(transport, jsonFactory, null)
+        return new DropAPI.Builder(transport, jsonFactory, null)
                 .setRootUrl("https://drop-web-service.appspot.com/_ah/api/")
                 .setServicePath("dropApi/v1/")
                 .build();

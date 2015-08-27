@@ -9,8 +9,16 @@ import com.google.appengine.api.blobstore.BlobstoreService;
 import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.QueryResultIterator;
+import com.google.appengine.repackaged.com.google.api.client.util.IOUtils;
 import com.googlecode.objectify.cmd.Query;
 
+import org.apache.geronimo.mail.util.StringBufferOutputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -21,6 +29,9 @@ import javax.inject.Named;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 @Api(
+        canonicalName = "Drop API",
+        title = "Drop API",
+        description = "Drop App API",
         name = "dropApi",
         version = "v1",
         resource = "drop",
@@ -54,14 +65,58 @@ public class DropEndpoint {
             path = "drop",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Drop insert(Drop drop) {
-        BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
-        String uploadUrl = blobstoreService.createUploadUrl("/upload");
-        drop.setUploadUrl(uploadUrl);
-
         ofy().save().entity(drop).now();
         logger.info("Created Drop.");
 
         return ofy().load().entity(drop).now();
+    }
+
+    @ApiMethod(
+            name = "uploadImage",
+            path = "drop/upload",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public StringBuffer uploadImage(ByteArrayInputStream imageDataStream) {
+        BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+        String uploadUrlString = blobstoreService.createUploadUrl("/");
+
+        URL uploadUrl;
+        try {
+            uploadUrl = new URL(uploadUrlString);
+        } catch(MalformedURLException e) {
+            logger.severe(uploadUrlString + " is a malformed URL.");
+            logger.severe(e.getMessage());
+            return new StringBuffer();
+        }
+
+        HttpURLConnection urlConnection;
+        try {
+            urlConnection = (HttpURLConnection) uploadUrl.openConnection();
+        } catch(IOException e) {
+            logger.severe("An error occurred connecting to " + uploadUrlString);
+            logger.severe(e.getMessage());
+            return new StringBuffer();
+        }
+
+        StringBuffer response;
+        try {
+            urlConnection.setDoOutput(true);
+            urlConnection.setChunkedStreamingMode(0);
+            // POST the data.
+            IOUtils.copy(imageDataStream, urlConnection.getOutputStream());
+
+            response = new StringBuffer();
+            StringBufferOutputStream outputStream = new StringBufferOutputStream(response);
+            IOUtils.copy(urlConnection.getInputStream(), outputStream);
+
+        } catch(IOException e) {
+            logger.severe("An error occurred connecting to " + uploadUrlString);
+            logger.severe(e.getMessage());
+            return new StringBuffer();
+        } finally {
+            urlConnection.disconnect();
+        }
+
+        return response;
     }
 
     /**
@@ -78,7 +133,6 @@ public class DropEndpoint {
             path = "drop/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Drop update(@Named("id") Long id, Drop drop) throws NotFoundException {
-        // TODO: You should validate your ID parameter against your resource's ID here.
         checkExists(id);
         ofy().save().entity(drop).now();
         logger.info("Updated Drop: " + drop);
