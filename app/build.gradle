@@ -26,4 +26,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:7.8.0'
     compile 'com.example.drop.drop.backend:dropApi:v1-1.20.0-SNAPSHOT'
     compile 'com.google.api-client:google-api-client-android:1.20.0'
+    compile 'com.mcxiaoke.volley:library-aar:1.0.0'
 }

@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.example.drop.drop.backend.dropApi.DropAPI;
 import com.example.drop.drop.backend.dropApi.model.BlobKey;
-import com.example.drop.drop.backend.dropApi.model.ByteArrayInputStream;
 import com.example.drop.drop.backend.dropApi.model.Drop;
 import com.example.drop.drop.backend.dropApi.model.GeoPt;
 
@@ -21,9 +20,7 @@ public class CreateDropTask extends AsyncTask<Object, Integer, Long> {
         float latitude = (float)params[0];
         float longitude = (float)params[1];
         String caption = (String)params[2];
-        byte[] imageData = (byte[])params[3];
-
-        BlobKey imageKey = dropService.uploadImage(imageData).execute();
+        BlobKey imageKey = (BlobKey)params[3];
 
         Drop toCreate = new Drop();
         toCreate.setLocation(new GeoPt()

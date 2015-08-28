@@ -12,10 +12,10 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.appspot.drop_web_service.dropApi.DropApi;
-import com.appspot.drop_web_service.dropApi.model.Drop;
 import com.example.drop.drop.R;
 import com.example.drop.drop.Utility;
+import com.example.drop.drop.backend.dropApi.DropAPI;
+import com.example.drop.drop.backend.dropApi.model.Drop;
 import com.example.drop.drop.data.DropContract;
 import com.google.android.gms.common.api.GoogleApiClient;
 
@@ -50,11 +50,11 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
         double currentLatitude = extras.getDouble("latitude");
         double currentLongitude = extras.getDouble("longitude");
 
-        DropApi service = Utility.getDropBackendApiService();
+        DropAPI service = Utility.getDropBackendApiService();
 
         List<Drop> drops = null;
         try {
-            drops = service.get().execute().getItems();
+            drops = service.list().execute().getItems();
         } catch(IOException e) {
             Log.d(LOG_TAG, "Failed to retrieve drops: " + e);
         }
