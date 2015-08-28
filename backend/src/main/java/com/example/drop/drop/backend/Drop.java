@@ -14,7 +14,6 @@ public class Drop {
     private String caption;
     private long createdOnUTCSeconds;
     private BlobKey imageKey;
-    private String imageUploadUrl;
 
     public GeoPt getLocation() {
         return location;
