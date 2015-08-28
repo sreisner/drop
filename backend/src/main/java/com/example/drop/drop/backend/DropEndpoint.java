@@ -72,50 +72,15 @@ public class DropEndpoint {
     }
 
     @ApiMethod(
-            name = "uploadImage",
-            path = "drop/upload",
-            httpMethod = ApiMethod.HttpMethod.POST)
-    public StringBuffer uploadImage(ByteArrayInputStream imageDataStream) {
+            name = "createUploadUrl",
+            path = "drop/image",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public StringResource createUploadUrl() {
         BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
         String uploadUrlString = blobstoreService.createUploadUrl("/");
 
-        URL uploadUrl;
-        try {
-            uploadUrl = new URL(uploadUrlString);
-        } catch(MalformedURLException e) {
-            logger.severe(uploadUrlString + " is a malformed URL.");
-            logger.severe(e.getMessage());
-            return new StringBuffer();
-        }
-
-        HttpURLConnection urlConnection;
-        try {
-            urlConnection = (HttpURLConnection) uploadUrl.openConnection();
-        } catch(IOException e) {
-            logger.severe("An error occurred connecting to " + uploadUrlString);
-            logger.severe(e.getMessage());
-            return new StringBuffer();
-        }
-
-        StringBuffer response;
-        try {
-            urlConnection.setDoOutput(true);
-            urlConnection.setChunkedStreamingMode(0);
-            // POST the data.
-            IOUtils.copy(imageDataStream, urlConnection.getOutputStream());
-
-            response = new StringBuffer();
-            StringBufferOutputStream outputStream = new StringBufferOutputStream(response);
-            IOUtils.copy(urlConnection.getInputStream(), outputStream);
-
-        } catch(IOException e) {
-            logger.severe("An error occurred connecting to " + uploadUrlString);
-            logger.severe(e.getMessage());
-            return new StringBuffer();
-        } finally {
-            urlConnection.disconnect();
-        }
-
+        StringResource response = new StringResource();
+        response.setData(uploadUrlString);
         return response;
     }
 
