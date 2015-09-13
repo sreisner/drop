@@ -59,6 +59,7 @@ public class DropMapActivity extends AppCompatActivity
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap mGoogleMap;
     private DropCursorAdapter mCursorAdapter;
+    private ListView mDropListView;
     private ProgressDialog mScanningDialog;
     private LatLng mCurrentLatLng;
     private boolean mScanInProgress;
@@ -88,8 +89,7 @@ public class DropMapActivity extends AppCompatActivity
 
         switch(id) {
             case R.id.action_create:
-                Intent intent = new Intent(this, CreateDropActivity.class);
-                startActivityForResult(intent, CREATE_DROP_RESULT_CODE);
+                startCreateDropActivity();
                 break;
             case R.id.action_scan:
                 scan();
@@ -101,36 +101,32 @@ public class DropMapActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+    private void startCreateDropActivity() {
+        Intent intent = new Intent(this, CreateDropActivity.class);
+        startActivityForResult(intent, CREATE_DROP_RESULT_CODE);
+    }
+
     private void logUnknownOptionSelected(MenuItem item) {
         Log.d(LOG_TAG, "Unknown option selected: " + item.getTitle() + "," + item.getItemId());
     }
 
     private void initializeDropList() {
         Log.d(LOG_TAG, "Initializing drop list.");
-        mCursorAdapter = new DropCursorAdapter(this, null, 0);
 
-        ListView dropListView = (ListView) findViewById(R.id.drop_list);
-        dropListView.setAdapter(mCursorAdapter);
-
-        dropListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (mGoogleMap != null) {
-                    Cursor data = (Cursor) mCursorAdapter.getItem(position);
-
-                    double latitude = data.getDouble(COLUMN_DROP_LATITUDE);
-                    double longitude = data.getDouble(COLUMN_DROP_LONGITUDE);
-                    LatLng location = new LatLng(latitude, longitude);
-
-                    CameraUpdate update = CameraUpdateFactory.newLatLng(location);
-                    mGoogleMap.animateCamera(update);
-                } else {
-                    Log.d(LOG_TAG, "Google Map is not ready.");
-                }
-            }
-        });
+        initializeDropListAdapter();
+        initializeDropListView();
 
         getLoaderManager().initLoader(DROP_LOADER_ID, null, this);
+    }
+
+    private void initializeDropListAdapter() {
+        mCursorAdapter = new DropCursorAdapter(this, null, 0);
+    }
+
+    private void initializeDropListView() {
+        mDropListView = (ListView) findViewById(R.id.drop_list);
+        mDropListView.setAdapter(mCursorAdapter);
+        mDropListView.setOnItemClickListener(new DropClickListener());
     }
 
     private void initializeScanningDialog() {
@@ -308,5 +304,39 @@ public class DropMapActivity extends AppCompatActivity
 
         return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    private class DropClickListener implements AdapterView.OnItemClickListener {
+        private Cursor clickedRow;
+
+        private double getClickedRowLatitude() {
+            return clickedRow.getDouble(COLUMN_DROP_LATITUDE);
+        }
+
+        private double getClickedRowLongitude() {
+            return clickedRow.getDouble(COLUMN_DROP_LONGITUDE);
+        }
+
+        private LatLng getClickedRowLocation() {
+            double latitude = getClickedRowLatitude();
+            double longitude = getClickedRowLongitude();
+            return new LatLng(latitude, longitude);
+        }
+
+        private void moveCamera(LatLng location) {
+            CameraUpdate update = CameraUpdateFactory.newLatLng(location);
+            mGoogleMap.animateCamera(update);
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            clickedRow = (Cursor) mCursorAdapter.getItem(position);
+            LatLng location = getClickedRowLocation();
+            if (mGoogleMap != null) {
+                moveCamera(location);
+            } else {
+                Log.d(LOG_TAG, "Google Map is not ready.");
+            }
+        }
     }
 }
