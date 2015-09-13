@@ -43,9 +43,7 @@ public class DropMapActivity extends AppCompatActivity
     private static final String LOG_TAG = DropMapActivity.class.getSimpleName();
 
     private LatLng currentLocation;
-
     private ProgressDialog scanningDialog;
-
     private DropCursorAdapter dropCursorAdapter;
     private GoogleApiClient googleApiClient;
     private GoogleMap googleMap;
@@ -58,7 +56,7 @@ public class DropMapActivity extends AppCompatActivity
         setContentView(R.layout.activity_drop_map);
         scanningDialog = new ScanningDialog(this);
 
-        initializeDropList();
+        initializeDropListView();
         initializeGoogleApiClient();
         initializeDropMap();
         initializeDropLoader();
@@ -109,7 +107,7 @@ public class DropMapActivity extends AppCompatActivity
         Log.d(LOG_TAG, "Unknown option selected: " + item.getTitle() + "," + item.getItemId());
     }
 
-    private void initializeDropList() {
+    private void initializeDropListView() {
         ListView dropListView = (ListView) findViewById(R.id.drop_list);
         dropCursorAdapter = new DropCursorAdapter(this, null, 0);
         dropListView.setAdapter(dropCursorAdapter);

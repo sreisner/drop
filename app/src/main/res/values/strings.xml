@@ -17,7 +17,7 @@
     <string name="action_next">Next</string>
     <string name="action_coordinates">Get Coordinates</string>
     <string name="title_activity_drop_map">DropMapActivity</string>
-    
+
     <string name="action_scan">Scan</string>
     <string name="enable_location_title">Current Location Required</string>
     <string name="enable_location_message">
