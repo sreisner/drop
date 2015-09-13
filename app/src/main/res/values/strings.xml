@@ -26,5 +26,5 @@
     </string>
     <string name="go_to_settings">Go to Settings</string>
     <string name="cancel">Cancel</string>
-    <string name="scanning">Scanning for nearby leaves...</string>
+    <string name="scanning">Scanning for nearby drops...</string>
 </resources>
