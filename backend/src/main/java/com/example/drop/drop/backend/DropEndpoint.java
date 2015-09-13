@@ -9,16 +9,8 @@ import com.google.appengine.api.blobstore.BlobstoreService;
 import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.QueryResultIterator;
-import com.google.appengine.repackaged.com.google.api.client.util.IOUtils;
 import com.googlecode.objectify.cmd.Query;
 
-import org.apache.geronimo.mail.util.StringBufferOutputStream;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -26,7 +18,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
+import static com.example.drop.drop.backend.OfyService.ofy;
 
 @Api(
         canonicalName = "Drop API",

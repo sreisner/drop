@@ -65,6 +65,10 @@
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
         </service>
+        <service
+            android:name=".DropUploaderService"
+            android:enabled="true"
+            android:exported="false" />
 
         <uses-library android:name="com.google.android.maps" />
     </application>
