@@ -17,7 +17,6 @@ import com.example.drop.drop.Utility;
 import com.example.drop.drop.backend.dropApi.DropAPI;
 import com.example.drop.drop.backend.dropApi.model.Drop;
 import com.example.drop.drop.data.DropContract;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,65 +25,96 @@ import java.util.List;
 public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final String LOG_TAG = DropSyncAdapter.class.getSimpleName();
 
-    public static final double DISCOVER_RADIUS_METERS = 10000;
-    public static final double DOWNLOAD_BOUNDARY_METERS = DISCOVER_RADIUS_METERS * 3;
-
-    private ContentResolver mContentResolver;
-    private GoogleApiClient mGoogleApiClient;
+    private DropAPI dropService;
+    private ContentResolver contentResolver;
+    private double currentLatitude;
+    private double currentLongitude;
+    private double discoverRadiusInMeters;
 
     public DropSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
 
-        mContentResolver = context.getContentResolver();
+        dropService = Utility.getDropBackendApiService();
+        contentResolver = context.getContentResolver();
+    }
 
-        mGoogleApiClient = Utility.buildGoogleApiClient(context);
-        mGoogleApiClient.connect();
+    private List<Drop> downloadAllDropsFromServer() {
+        try {
+            return dropService.list().execute().getItems();
+        } catch(IOException e) {
+            Log.d(LOG_TAG, "Failed to retrieve drops: " + e);
+        }
+        return new ArrayList<>();
+    }
+
+    private float getDistanceBetweenCurrentLocationAndDrop(Drop drop) {
+        float[] results = new float[1];
+        Location.distanceBetween(
+                currentLatitude, currentLongitude,
+                drop.getLocation().getLatitude(), drop.getLocation().getLongitude(),
+                results);
+        return results[0];
+    }
+
+
+    private List<Drop> getDropsWithinDiscoveryRadius(List<Drop> drops) {
+        ArrayList<Drop> dropsWithinRadius = new ArrayList<>();
+        for(Drop drop : drops) {
+            float distance = getDistanceBetweenCurrentLocationAndDrop(drop);
+            if(distance < discoverRadiusInMeters) {
+                dropsWithinRadius.add(drop);
+            }
+        }
+        return dropsWithinRadius;
+    }
+
+    private List<Drop> downloadDropsInDiscoveryRadius() {
+        List<Drop> allDrops = downloadAllDropsFromServer();
+        return getDropsWithinDiscoveryRadius(allDrops);
+    }
+
+    private void deleteLocalDropData() {
+        contentResolver.delete(DropContract.DropEntry.CONTENT_URI, null, null);
+    }
+
+    private ContentValues getDropContentValues(Drop drop) {
+        ContentValues values = new ContentValues();
+        values.put(DropContract.DropEntry.COLUMN_LATITUDE, drop.getLocation().getLatitude());
+        values.put(DropContract.DropEntry.COLUMN_LONGITUDE, drop.getLocation().getLongitude());
+        values.put(DropContract.DropEntry.COLUMN_CAPTION, drop.getCaption());
+        values.put(DropContract.DropEntry.COLUMN_CREATED_ON, drop.getCreatedOnUTCSeconds());
+        return values;
+    }
+
+    private void insertDrop(Drop drop) {
+        ContentValues contentValues = getDropContentValues(drop);
+        contentResolver.insert(DropContract.DropEntry.CONTENT_URI, contentValues);
+    }
+
+    private void insertDropsIntoLocalDatabase(List<Drop> drops) {
+        for(Drop drop : drops) {
+            insertDrop(drop);
+        }
+    }
+
+    private void notifyListenersOfDataChange() {
+        contentResolver.notifyChange(DropContract.DropEntry.CONTENT_URI, null);
     }
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
-
         Log.d(LOG_TAG, "Performing sync.");
 
-        double currentLatitude = extras.getDouble("latitude");
-        double currentLongitude = extras.getDouble("longitude");
+        // TODO:  Consider putting these three values into their own class.
+        currentLatitude = extras.getDouble("latitude");
+        currentLongitude = extras.getDouble("longitude");
+        discoverRadiusInMeters = extras.getDouble("radiusInMeters");
 
-        DropAPI service = Utility.getDropBackendApiService();
-
-        List<Drop> drops = null;
-        try {
-            drops = service.list().execute().getItems();
-        } catch(IOException e) {
-            Log.d(LOG_TAG, "Failed to retrieve drops: " + e);
-        }
-
-        if(drops == null) {
-            drops = new ArrayList<>();
-        }
-
-        mContentResolver.delete(DropContract.DropEntry.CONTENT_URI, null, null);
-
-        Log.d(LOG_TAG, "Found " + drops.size() + " drops.  Inserting...");
-        for(Drop drop : drops) {
-            float[] results = new float[1];
-            Location.distanceBetween(
-                    currentLatitude, currentLongitude,
-                    drop.getLocation().getLatitude(), drop.getLocation().getLongitude(),
-                    results);
-
-            float distance = results[0];
-            if(distance <= DropSyncAdapter.DISCOVER_RADIUS_METERS) {
-                ContentValues values = new ContentValues();
-                values.put(DropContract.DropEntry.COLUMN_LATITUDE, drop.getLocation().getLatitude());
-                values.put(DropContract.DropEntry.COLUMN_LONGITUDE, drop.getLocation().getLongitude());
-                values.put(DropContract.DropEntry.COLUMN_CAPTION, drop.getCaption());
-                values.put(DropContract.DropEntry.COLUMN_CREATED_ON, drop.getCreatedOnUTCSeconds());
-                mContentResolver.insert(DropContract.DropEntry.CONTENT_URI, values);
-            }
-        }
-
-        mContentResolver.notifyChange(DropContract.DropEntry.CONTENT_URI, null);
+        deleteLocalDropData();
+        List<Drop> dropsInDiscoveryRadius = downloadDropsInDiscoveryRadius();
+        insertDropsIntoLocalDatabase(dropsInDiscoveryRadius);
+        notifyListenersOfDataChange();
     }
 
     public static void syncImmediately(Context context, Bundle locationBundle) {

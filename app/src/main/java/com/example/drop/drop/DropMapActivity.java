@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
@@ -43,38 +42,26 @@ public class DropMapActivity extends AppCompatActivity
         LocationListener {
     private static final String LOG_TAG = DropMapActivity.class.getSimpleName();
 
-    private static final float DEFAULT_ZOOM_LEVEL = 17;
-    private static final float REQUIRED_ACCURACY_METERS = 250;
+    private LatLng currentLocation;
 
-    private static final int DROP_LOADER_ID = 0;
-    private static final int ENABLE_LOCATION_RESULT_CODE = 0;
-    private static final int CREATE_DROP_RESULT_CODE = 1;
+    private ProgressDialog scanningDialog;
 
-    public static final int COLUMN_DROP_ID = 0;
-    public static final int COLUMN_DROP_LATITUDE = 1;
-    public static final int COLUMN_DROP_LONGITUDE = 2;
-    public static final int COLUMN_DROP_CAPTION = 3;
-    public static final int COLUMN_DROP_CREATED_ON = 4;
-
-    private GoogleApiClient mGoogleApiClient;
-    private GoogleMap mGoogleMap;
-    private DropCursorAdapter mCursorAdapter;
-    private ListView mDropListView;
-    private ProgressDialog mScanningDialog;
-    private LatLng mCurrentLatLng;
-    private boolean mScanInProgress;
+    private DropCursorAdapter dropCursorAdapter;
+    private GoogleApiClient googleApiClient;
+    private GoogleMap googleMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_drop_map);
 
-        setScanInProgress(false);
+        Log.d(LOG_TAG, "onCreate");
+        setContentView(R.layout.activity_drop_map);
+        scanningDialog = new ScanningDialog(this);
+
         initializeDropList();
-        mScanningDialog = new ScanningDialog(this);
         initializeGoogleApiClient();
-        initializeMap();
+        initializeDropMap();
+        initializeDropLoader();
     }
 
     @Override
@@ -89,10 +76,10 @@ public class DropMapActivity extends AppCompatActivity
 
         switch(id) {
             case R.id.action_create:
-                startCreateDropActivity();
+                createDropButtonPressed();
                 break;
             case R.id.action_scan:
-                scan();
+                scanButtonPressed();
                 break;
             default:
                 logUnknownOptionSelected(item);
@@ -101,9 +88,21 @@ public class DropMapActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+    private void createDropButtonPressed() {
+        startCreateDropActivity();
+    }
+
+    private void scanButtonPressed() {
+        if(Utility.isLocationServicesEnabled(this)) {
+            beginScan();
+        } else {
+            showEnableLocationDialog();
+        }
+    }
+
     private void startCreateDropActivity() {
         Intent intent = new Intent(this, CreateDropActivity.class);
-        startActivityForResult(intent, CREATE_DROP_RESULT_CODE);
+        startActivity(intent);
     }
 
     private void logUnknownOptionSelected(MenuItem item) {
@@ -111,76 +110,101 @@ public class DropMapActivity extends AppCompatActivity
     }
 
     private void initializeDropList() {
-        Log.d(LOG_TAG, "Initializing drop list.");
-
-        initializeDropListAdapter();
-        initializeDropListView();
-
-        getLoaderManager().initLoader(DROP_LOADER_ID, null, this);
+        ListView dropListView = (ListView) findViewById(R.id.drop_list);
+        dropCursorAdapter = new DropCursorAdapter(this, null, 0);
+        dropListView.setAdapter(dropCursorAdapter);
+        dropListView.setOnItemClickListener(new DropClickListener());
     }
 
-    private void initializeDropListAdapter() {
-        mCursorAdapter = new DropCursorAdapter(this, null, 0);
-    }
-
-    private void initializeDropListView() {
-        mDropListView = (ListView) findViewById(R.id.drop_list);
-        mDropListView.setAdapter(mCursorAdapter);
-        mDropListView.setOnItemClickListener(new DropClickListener());
+    private void initializeDropLoader() {
+        getLoaderManager().initLoader(0, null, this);
     }
 
     private void initializeGoogleApiClient() {
         Log.d(LOG_TAG, "Initializing Google API client.");
-        mGoogleApiClient = Utility.buildGoogleApiClient(this);
-        mGoogleApiClient.registerConnectionCallbacks(this);
-        mGoogleApiClient.connect();
+        googleApiClient = Utility.buildGoogleApiClient(this);
+        googleApiClient.registerConnectionCallbacks(this);
+        googleApiClient.connect();
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (id == DROP_LOADER_ID) {
-            return new CursorLoader(
-                    this, DropContract.DropEntry.CONTENT_URI,
-                    null, null, null, null);
-        } else {
-            throw new UnsupportedOperationException("id not recognized");
+    private void showScanningDialog() {
+        scanningDialog.show();
+    }
+
+    private void hideScanningDialog() {
+        scanningDialog.hide();
+    }
+
+    private LatLng getPositionFromDropListViewRow(Cursor dropListViewRowCursor) {
+        double latitude = dropListViewRowCursor.getDouble(DropConstants.COLUMN_DROP_LATITUDE);
+        double longitude = dropListViewRowCursor.getDouble(DropConstants.COLUMN_DROP_LONGITUDE);
+        return new LatLng(latitude, longitude);
+    }
+
+    private String getCaptionFromDropListViewRow(Cursor dropListViewRowCursor) {
+        return dropListViewRowCursor.getString(DropConstants.COLUMN_DROP_CAPTION);
+    }
+
+    private MarkerOptions getMapMarkerForDropListViewRow(Cursor dropListViewRowCursor) {
+        LatLng dropLocation = getPositionFromDropListViewRow(dropListViewRowCursor);
+        String dropCaption = getCaptionFromDropListViewRow(dropListViewRowCursor);
+        return new MarkerOptions().position(dropLocation)
+                                  .title(dropCaption);
+    }
+
+    private void addMarkerToMapForDropListViewRow(Cursor dropListViewRowCursor) {
+        MarkerOptions marker = getMapMarkerForDropListViewRow(dropListViewRowCursor);
+        if(googleMap != null) {
+            googleMap.addMarker(marker);
         }
     }
 
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.d(LOG_TAG, "Finished downloading drop data.");
-
-        if (mGoogleMap != null) {
-            while (data.moveToNext()) {
-                double latitude = data.getDouble(COLUMN_DROP_LATITUDE);
-                double longitude = data.getDouble(COLUMN_DROP_LONGITUDE);
-                String caption = data.getString(COLUMN_DROP_CAPTION);
-                LatLng position = new LatLng(latitude, longitude);
-
-                mGoogleMap.addMarker(new MarkerOptions()
-                        .position(position)
-                        .title(caption));
-            }
+    private void addMarkersToMapForDropData(Cursor dropData) {
+        while (dropData.moveToNext()) {
+            addMarkerToMapForDropListViewRow(dropData);
         }
+    }
 
-        mCursorAdapter.swapCursor(data);
-        mScanInProgress = false;
-        mScanningDialog.hide();
+    private void updateMap(Cursor dropData) {
+        clearMap();
+        moveMapCamera(currentLocation);
+        placeDiscoveryCircleOnMap();
+        addMarkersToMapForDropData(dropData);
+    }
+
+    private void updateUIWithDropData(Cursor dropData) {
+        dropCursorAdapter.swapCursor(dropData);
+        updateMap(dropData);
+    }
+
+    private CursorLoader getDropCursorLoader() {
+        return new CursorLoader(
+                this, DropContract.DropEntry.CONTENT_URI,
+                null, null, null, null);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
+        return getDropCursorLoader();
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor dropData) {
+        if(googleApiClient.isConnected()) {
+            endScan();
+            updateUIWithDropData(dropData);
+        }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         Log.d(LOG_TAG, "Loader reset.");
-        if(mCursorAdapter != null) {
-            mCursorAdapter.swapCursor(null);
-        }
+        dropCursorAdapter.swapCursor(null);
     }
 
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(LOG_TAG, "Connected to Google Play Services.");
-        scan();
     }
 
     @Override
@@ -188,85 +212,103 @@ public class DropMapActivity extends AppCompatActivity
         Log.d(LOG_TAG, "Connection to Google Play Services suspended.");
     }
 
-    private void initializeMap() {
-        Log.d(LOG_TAG, "Initializing map.");
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+    private SupportMapFragment getDropMapFragment() {
+        return (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     }
 
-    private void setScanInProgress(boolean state) {
-        mScanInProgress = state;
+    private void initializeDropMap() {
+        Log.d(LOG_TAG, "Initializing map.");
+        SupportMapFragment dropMapFragment = getDropMapFragment();
+        dropMapFragment.getMapAsync(this);
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Log.d(LOG_TAG, "Map initialized.");
-        mGoogleMap = googleMap;
+        this.googleMap = googleMap;
     }
 
-    private void scan() {
-        if (!isLocationEnabled()) {
-            showEnableLocationDialog();
-        } else if (canScan()) {
-            mScanInProgress = true;
-            mScanningDialog.show();
-            enableLocationUpdates();
+    private void beginScan() {
+        if(canBeginReceivingLocationUpdates()) {
+            showScanningDialog();
+            beginReceivingLocationUpdates();
         }
     }
 
-    private void enableLocationUpdates() {
-        if (mGoogleApiClient.isConnected()) {
-            LocationRequest locationRequest = new LocationRequest();
-            locationRequest.setInterval(10000);
-            locationRequest.setFastestInterval(5000);
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            LocationServices.FusedLocationApi.requestLocationUpdates(
-                    mGoogleApiClient, locationRequest, this);
-        }
+    private void endScan() {
+        stopReceivingLocationUpdates();
+        hideScanningDialog();
     }
 
-    private void disableLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+    private LocationRequest getScanLocationRequest() {
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setInterval(DropConstants.SCAN_LOCATION_UPDATE_INTERVAL_MS);
+        locationRequest.setFastestInterval(DropConstants.SCAN_LOCATION_UPDATE_FASTEST_INTERVAL_MS);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        return locationRequest;
     }
 
-    private boolean canScan() {
-        return !mScanInProgress && isInitialized() && isLocationEnabled();
+    private boolean canBeginReceivingLocationUpdates() {
+        return googleApiClient.isConnected() && Utility.isLocationServicesEnabled(this);
     }
 
-    private boolean isInitialized() {
-        return mGoogleMap != null && mGoogleApiClient.isConnected();
+    private void beginReceivingLocationUpdates() {
+        LocationRequest locationRequest = getScanLocationRequest();
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                googleApiClient, locationRequest, this);
+    }
+
+    private void stopReceivingLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+    }
+
+    private boolean locationIsAccurateEnoughForDropDownload(Location location) {
+        return location !=null &&
+               location.hasAccuracy() &&
+               location.getAccuracy() < DropConstants.REQUIRED_ACCURACY_METERS;
+    }
+
+    private Bundle createLocationBundle(LatLng location, double radiusInMeters) {
+        Bundle bundle = new Bundle();
+        bundle.putDouble("latitude", location.latitude);
+        bundle.putDouble("longitude", location.longitude);
+        bundle.putDouble("radiusInMeters", radiusInMeters);
+        return bundle;
+    }
+
+    private void beginDropDownload(LatLng location, double radiusInMeters) {
+        Bundle bundle = createLocationBundle(location, radiusInMeters);
+        DropSyncAdapter.syncImmediately(this, bundle);
     }
 
     @Override
     public void onLocationChanged(Location location) {
         Log.d(LOG_TAG, "Location changed! " + location);
-        if (location != null && location.hasAccuracy() &&
-                location.getAccuracy() < REQUIRED_ACCURACY_METERS && isInitialized()) {
-            mCurrentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-            updateMapLocation();
-            Bundle bundle = new Bundle();
-            bundle.putDouble("latitude", location.getLatitude());
-            bundle.putDouble("longitude", location.getLongitude());
-            DropSyncAdapter.syncImmediately(this, bundle);
-            disableLocationUpdates();
+        if (locationIsAccurateEnoughForDropDownload(location)) {
+            currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+            beginDropDownload(currentLocation, DropConstants.DISCOVER_RADIUS_METERS);
         }
     }
 
-    private void updateMapLocation() {
-        if (mCurrentLatLng == null || mGoogleMap == null) {
-            return;
-        }
+    private void clearMap() {
+        googleMap.clear();
+    }
 
-        Log.d(LOG_TAG, "Moving camera to user's current location.");
+    private CameraUpdate getCameraUpdateMovement(LatLng location) {
+        return CameraUpdateFactory.newLatLngZoom(
+                location,
+                DropConstants.MAP_ZOOM_LEVEL);
+    }
 
-        mGoogleMap.clear();
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLatLng, DEFAULT_ZOOM_LEVEL));
-        mGoogleMap.addCircle(new CircleOptions()
-                .center(mCurrentLatLng)
-                .radius(DropSyncAdapter.DISCOVER_RADIUS_METERS)
-                .fillColor(getResources().getColor(R.color.discover_circle_color))
-                .strokeWidth(0));
+    private void moveMapCamera(LatLng location) {
+        CameraUpdate cameraUpdate = getCameraUpdateMovement(location);
+        googleMap.moveCamera(cameraUpdate);
+    }
+
+    private void placeDiscoveryCircleOnMap() {
+        CircleOptions circleData = new CircleOptions()
+                .center(currentLocation);
+        googleMap.addCircle(circleData);
     }
 
     private void showEnableLocationDialog() {
@@ -276,7 +318,7 @@ public class DropMapActivity extends AppCompatActivity
                 .setPositiveButton(R.string.go_to_settings, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivityForResult(settingsIntent, DropMapActivity.ENABLE_LOCATION_RESULT_CODE);
+                        startActivity(settingsIntent);
                     }
                 });
 
@@ -284,31 +326,15 @@ public class DropMapActivity extends AppCompatActivity
         dialog.show();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == ENABLE_LOCATION_RESULT_CODE && resultCode == RESULT_OK) {
-            scan();
-        } else if(requestCode == CREATE_DROP_RESULT_CODE && resultCode == RESULT_OK) {
-            scan();
-        }
-    }
-
-    private boolean isLocationEnabled() {
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-        return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-    }
-
     private class DropClickListener implements AdapterView.OnItemClickListener {
         private Cursor clickedRow;
 
         private double getClickedRowLatitude() {
-            return clickedRow.getDouble(COLUMN_DROP_LATITUDE);
+            return clickedRow.getDouble(DropConstants.COLUMN_DROP_LATITUDE);
         }
 
         private double getClickedRowLongitude() {
-            return clickedRow.getDouble(COLUMN_DROP_LONGITUDE);
+            return clickedRow.getDouble(DropConstants.COLUMN_DROP_LONGITUDE);
         }
 
         private LatLng getClickedRowLocation() {
@@ -317,17 +343,12 @@ public class DropMapActivity extends AppCompatActivity
             return new LatLng(latitude, longitude);
         }
 
-        private void moveCamera(LatLng location) {
-            CameraUpdate update = CameraUpdateFactory.newLatLng(location);
-            mGoogleMap.animateCamera(update);
-        }
-
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            clickedRow = (Cursor) mCursorAdapter.getItem(position);
+            clickedRow = (Cursor) dropCursorAdapter.getItem(position);
             LatLng location = getClickedRowLocation();
-            if (mGoogleMap != null) {
-                moveCamera(location);
+            if (googleMap != null) {
+                moveMapCamera(location);
             } else {
                 Log.d(LOG_TAG, "Google Map is not ready.");
             }

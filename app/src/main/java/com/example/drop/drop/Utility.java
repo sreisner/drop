@@ -1,6 +1,7 @@
 package com.example.drop.drop;
 
 import android.content.Context;
+import android.location.LocationManager;
 
 import com.example.drop.drop.backend.dropApi.DropAPI;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -17,7 +18,6 @@ import java.util.TimeZone;
 public class Utility {
     private static String LOG_TAG = Utility.class.getSimpleName();
 
-    private static int EARTHS_RADIUS = 6378137;
     private static final String DISPLAY_DATE_FORMAT = "K:mmaa - MMMM dd, yyyy";
 
     public static synchronized GoogleApiClient buildGoogleApiClient(Context context) {
@@ -40,5 +40,11 @@ public class Utility {
                 .setRootUrl("https://drop-web-service.appspot.com/_ah/api/")
                 .setServicePath("dropApi/v1/")
                 .build();
+    }
+
+    public static boolean isLocationServicesEnabled(Context context) {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 }

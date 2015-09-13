@@ -26,8 +26,8 @@ public class DropCursorAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder)view.getTag();
-        String caption = cursor.getString(DropMapActivity.COLUMN_DROP_CAPTION);
-        long createdOnUTCSeconds = cursor.getLong(DropMapActivity.COLUMN_DROP_CREATED_ON);
+        String caption = cursor.getString(DropConstants.COLUMN_DROP_CAPTION);
+        long createdOnUTCSeconds = cursor.getLong(DropConstants.COLUMN_DROP_CREATED_ON);
         String formattedDate = Utility.formatDateForDisplay(createdOnUTCSeconds);
 
         viewHolder.captionTextView.setText(caption);
