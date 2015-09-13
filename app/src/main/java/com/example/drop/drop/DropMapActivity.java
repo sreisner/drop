@@ -86,16 +86,23 @@ public class DropMapActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            return true;
-        } else if (id == R.id.action_create) {
-            Intent intent = new Intent(this, CreateDropActivity.class);
-            startActivityForResult(intent, CREATE_DROP_RESULT_CODE);
-        } else if (id == R.id.action_scan) {
-            scan();
+        switch(id) {
+            case R.id.action_create:
+                Intent intent = new Intent(this, CreateDropActivity.class);
+                startActivityForResult(intent, CREATE_DROP_RESULT_CODE);
+                break;
+            case R.id.action_scan:
+                scan();
+                break;
+            default:
+                logUnknownOptionSelected(item);
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void logUnknownOptionSelected(MenuItem item) {
+        Log.d(LOG_TAG, "Unknown option selected: " + item.getTitle() + "," + item.getItemId());
     }
 
     private void initializeDropList() {
