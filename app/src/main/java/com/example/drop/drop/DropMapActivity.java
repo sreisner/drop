@@ -34,7 +34,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-
 public class DropMapActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks,
         LoaderManager.LoaderCallbacks<Cursor>,
@@ -60,6 +59,32 @@ public class DropMapActivity extends AppCompatActivity
         initializeGoogleApiClient();
         initializeDropMap();
         initializeDropLoader();
+    }
+
+    private void initializeDropListView() {
+        Log.d(LOG_TAG, "Initializing Drop ListView");
+        ListView dropListView = (ListView) findViewById(R.id.drop_list);
+        dropCursorAdapter = new DropCursorAdapter(this, null, 0);
+        dropListView.setAdapter(dropCursorAdapter);
+        dropListView.setOnItemClickListener(new DropClickListener());
+    }
+
+    private void initializeGoogleApiClient() {
+        Log.d(LOG_TAG, "Initializing Google API client");
+        googleApiClient = Utility.buildGoogleApiClient(this);
+        googleApiClient.registerConnectionCallbacks(this);
+        googleApiClient.connect();
+    }
+
+    private void initializeDropMap() {
+        Log.d(LOG_TAG, "Initializing map");
+        SupportMapFragment dropMapFragment = getDropMapFragment();
+        dropMapFragment.getMapAsync(this);
+    }
+
+    private void initializeDropLoader() {
+        Log.d(LOG_TAG, "Initializing Drop loader");
+        getLoaderManager().initLoader(0, null, this);
     }
 
     @Override
@@ -90,6 +115,11 @@ public class DropMapActivity extends AppCompatActivity
         startCreateDropActivity();
     }
 
+    private void startCreateDropActivity() {
+        Intent intent = new Intent(this, CreateDropActivity.class);
+        startActivity(intent);
+    }
+
     private void scanButtonPressed() {
         if(Utility.isLocationServicesEnabled(this)) {
             beginScan();
@@ -98,31 +128,11 @@ public class DropMapActivity extends AppCompatActivity
         }
     }
 
-    private void startCreateDropActivity() {
-        Intent intent = new Intent(this, CreateDropActivity.class);
-        startActivity(intent);
-    }
-
-    private void logUnknownOptionSelected(MenuItem item) {
-        Log.d(LOG_TAG, "Unknown option selected: " + item.getTitle() + "," + item.getItemId());
-    }
-
-    private void initializeDropListView() {
-        ListView dropListView = (ListView) findViewById(R.id.drop_list);
-        dropCursorAdapter = new DropCursorAdapter(this, null, 0);
-        dropListView.setAdapter(dropCursorAdapter);
-        dropListView.setOnItemClickListener(new DropClickListener());
-    }
-
-    private void initializeDropLoader() {
-        getLoaderManager().initLoader(0, null, this);
-    }
-
-    private void initializeGoogleApiClient() {
-        Log.d(LOG_TAG, "Initializing Google API client.");
-        googleApiClient = Utility.buildGoogleApiClient(this);
-        googleApiClient.registerConnectionCallbacks(this);
-        googleApiClient.connect();
+    private void beginScan() {
+        if(canBeginReceivingLocationUpdates()) {
+            showScanningDialog();
+            beginReceivingLocationUpdates();
+        }
     }
 
     private void showScanningDialog() {
@@ -131,6 +141,75 @@ public class DropMapActivity extends AppCompatActivity
 
     private void hideScanningDialog() {
         scanningDialog.hide();
+    }
+
+    private void showEnableLocationDialog() {
+        // TODO:  Clean up this method.
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.enable_location_message)
+                .setTitle(R.string.enable_location_title)
+                .setPositiveButton(R.string.go_to_settings, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(settingsIntent);
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void endScan() {
+        stopReceivingLocationUpdates();
+        hideScanningDialog();
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
+        return getDropCursorLoader();
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor dropData) {
+        if(googleApiClient.isConnected()) {
+            endScan();
+            updateUIWithDropData(dropData);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        Log.d(LOG_TAG, "Loader reset.");
+        dropCursorAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.d(LOG_TAG, "Connected to Google Play Services.");
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d(LOG_TAG, "Connection to Google Play Services suspended.");
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Log.d(LOG_TAG, "Map initialized.");
+        this.googleMap = googleMap;
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(LOG_TAG, "Location changed! " + location);
+        if (locationIsAccurateEnoughForDropDownload(location)) {
+            currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+            beginDropDownload(currentLocation, DropConstants.DISCOVER_RADIUS_METERS);
+        }
+    }
+
+    private void logUnknownOptionSelected(MenuItem item) {
+        Log.d(LOG_TAG, "Unknown option selected: " + item.getTitle() + "," + item.getItemId());
     }
 
     private LatLng getPositionFromDropListViewRow(Cursor dropListViewRowCursor) {
@@ -181,61 +260,8 @@ public class DropMapActivity extends AppCompatActivity
                 null, null, null, null);
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
-        return getDropCursorLoader();
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor dropData) {
-        if(googleApiClient.isConnected()) {
-            endScan();
-            updateUIWithDropData(dropData);
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        Log.d(LOG_TAG, "Loader reset.");
-        dropCursorAdapter.swapCursor(null);
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(LOG_TAG, "Connected to Google Play Services.");
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.d(LOG_TAG, "Connection to Google Play Services suspended.");
-    }
-
     private SupportMapFragment getDropMapFragment() {
         return (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-    }
-
-    private void initializeDropMap() {
-        Log.d(LOG_TAG, "Initializing map.");
-        SupportMapFragment dropMapFragment = getDropMapFragment();
-        dropMapFragment.getMapAsync(this);
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Log.d(LOG_TAG, "Map initialized.");
-        this.googleMap = googleMap;
-    }
-
-    private void beginScan() {
-        if(canBeginReceivingLocationUpdates()) {
-            showScanningDialog();
-            beginReceivingLocationUpdates();
-        }
-    }
-
-    private void endScan() {
-        stopReceivingLocationUpdates();
-        hideScanningDialog();
     }
 
     private LocationRequest getScanLocationRequest() {
@@ -279,15 +305,6 @@ public class DropMapActivity extends AppCompatActivity
         DropSyncAdapter.syncImmediately(this, bundle);
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.d(LOG_TAG, "Location changed! " + location);
-        if (locationIsAccurateEnoughForDropDownload(location)) {
-            currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-            beginDropDownload(currentLocation, DropConstants.DISCOVER_RADIUS_METERS);
-        }
-    }
-
     private void clearMap() {
         googleMap.clear();
     }
@@ -307,21 +324,6 @@ public class DropMapActivity extends AppCompatActivity
         CircleOptions circleData = new CircleOptions()
                 .center(currentLocation);
         googleMap.addCircle(circleData);
-    }
-
-    private void showEnableLocationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.enable_location_message)
-                .setTitle(R.string.enable_location_title)
-                .setPositiveButton(R.string.go_to_settings, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(settingsIntent);
-                    }
-                });
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     private class DropClickListener implements AdapterView.OnItemClickListener {
