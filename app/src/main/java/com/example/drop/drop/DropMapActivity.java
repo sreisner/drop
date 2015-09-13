@@ -72,7 +72,7 @@ public class DropMapActivity extends AppCompatActivity
 
         setScanInProgress(false);
         initializeDropList();
-        initializeScanningDialog();
+        mScanningDialog = new ScanningDialog(this);
         initializeGoogleApiClient();
         initializeMap();
     }
@@ -127,12 +127,6 @@ public class DropMapActivity extends AppCompatActivity
         mDropListView = (ListView) findViewById(R.id.drop_list);
         mDropListView.setAdapter(mCursorAdapter);
         mDropListView.setOnItemClickListener(new DropClickListener());
-    }
-
-    private void initializeScanningDialog() {
-        mScanningDialog = new ProgressDialog(this);
-        mScanningDialog.setMessage(getString(R.string.scanning));
-        mScanningDialog.setCancelable(false);
     }
 
     private void initializeGoogleApiClient() {
