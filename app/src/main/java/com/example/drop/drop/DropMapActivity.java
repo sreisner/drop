@@ -69,9 +69,7 @@ public class DropMapActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drop_map);
 
-        mScanInProgress = false;
-        mCurrentLatLng = null;
-
+        setScanInProgress(false);
         initializeDropList();
         initializeScanningDialog();
         initializeGoogleApiClient();
@@ -198,6 +196,10 @@ public class DropMapActivity extends AppCompatActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    private void setScanInProgress(boolean state) {
+        mScanInProgress = state;
     }
 
     @Override
