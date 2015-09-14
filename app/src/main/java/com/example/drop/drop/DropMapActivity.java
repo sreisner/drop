@@ -122,6 +122,7 @@ public class DropMapActivity extends AppCompatActivity
 
     private void scanButtonPressed() {
         if(Utility.isLocationServicesEnabled(this)) {
+            showScanningDialog();
             beginScan();
         } else {
             showEnableLocationDialog();
@@ -130,7 +131,6 @@ public class DropMapActivity extends AppCompatActivity
 
     private void beginScan() {
         if(canBeginReceivingLocationUpdates()) {
-            showScanningDialog();
             beginReceivingLocationUpdates();
         }
     }
@@ -159,11 +159,6 @@ public class DropMapActivity extends AppCompatActivity
         dialog.show();
     }
 
-    private void endScan() {
-        stopReceivingLocationUpdates();
-        hideScanningDialog();
-    }
-
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
         return getDropCursorLoader();
@@ -171,8 +166,8 @@ public class DropMapActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor dropData) {
-        if(googleApiClient.isConnected()) {
-            endScan();
+        if(currentLocation != null) {
+            hideScanningDialog();
             updateUIWithDropData(dropData);
         }
     }
@@ -203,6 +198,7 @@ public class DropMapActivity extends AppCompatActivity
     public void onLocationChanged(Location location) {
         Log.d(LOG_TAG, "Location changed! " + location);
         if (locationIsAccurateEnoughForDropDownload(location)) {
+            stopReceivingLocationUpdates();
             currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
             beginDropDownload(currentLocation, DropConstants.DISCOVER_RADIUS_METERS);
         }
@@ -287,7 +283,7 @@ public class DropMapActivity extends AppCompatActivity
     }
 
     private boolean locationIsAccurateEnoughForDropDownload(Location location) {
-        return location !=null &&
+        return location != null &&
                location.hasAccuracy() &&
                location.getAccuracy() < DropConstants.REQUIRED_ACCURACY_METERS;
     }

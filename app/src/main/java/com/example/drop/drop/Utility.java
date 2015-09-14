@@ -1,7 +1,9 @@
 package com.example.drop.drop;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.location.LocationManager;
+import android.util.Base64;
 
 import com.example.drop.drop.backend.dropApi.DropAPI;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -10,6 +12,7 @@ import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.http.HttpTransport;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -46,5 +49,12 @@ public class Utility {
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    public static String convertBitmapToJpegBase64String(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        byte[] rawJpeg = stream.toByteArray();
+        return Base64.encodeToString(rawJpeg, Base64.DEFAULT);
     }
 }

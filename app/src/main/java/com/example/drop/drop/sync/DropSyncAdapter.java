@@ -39,8 +39,12 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private List<Drop> downloadAllDropsFromServer() {
+        Log.d(LOG_TAG, "Downloading all drops from server");
         try {
-            return dropService.list().execute().getItems();
+            List<Drop> drops = dropService.list().execute().getItems();
+            if(drops != null) {
+                return drops;
+            }
         } catch(IOException e) {
             Log.d(LOG_TAG, "Failed to retrieve drops: " + e);
         }
@@ -48,6 +52,8 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private float getDistanceBetweenCurrentLocationAndDrop(Drop drop) {
+        Log.d(LOG_TAG, "Calculating distance between " + currentLatitude + "," + currentLongitude +
+                       " and " + drop.getLocation().getLatitude() + "," + drop.getLocation().getLongitude());
         float[] results = new float[1];
         Location.distanceBetween(
                 currentLatitude, currentLongitude,
@@ -56,8 +62,8 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
         return results[0];
     }
 
-
     private List<Drop> getDropsWithinDiscoveryRadius(List<Drop> drops) {
+        Log.d(LOG_TAG, "Getting drops within disocvery radius.");
         ArrayList<Drop> dropsWithinRadius = new ArrayList<>();
         for(Drop drop : drops) {
             float distance = getDistanceBetweenCurrentLocationAndDrop(drop);
@@ -65,6 +71,8 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
                 dropsWithinRadius.add(drop);
             }
         }
+        Log.d(LOG_TAG, "Downloaded " + drops.size() + " drops, filtered down to " +
+                       dropsWithinRadius.size() + " drops.");
         return dropsWithinRadius;
     }
 
@@ -74,6 +82,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void deleteLocalDropData() {
+        Log.d(LOG_TAG, "Deleting all local drop data");
         contentResolver.delete(DropContract.DropEntry.CONTENT_URI, null, null);
     }
 
@@ -87,6 +96,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void insertDrop(Drop drop) {
+        Log.d(LOG_TAG, "Inserting drop into local database");
         ContentValues contentValues = getDropContentValues(drop);
         contentResolver.insert(DropContract.DropEntry.CONTENT_URI, contentValues);
     }

@@ -13,6 +13,15 @@ public class Drop {
     private String caption;
     private long createdOnUTCSeconds;
     private String imageKey;
+    private byte[] image;
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
 
     public GeoPt getLocation() {
         return location;
