@@ -63,7 +63,7 @@ public class DropSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private List<Drop> getDropsWithinDiscoveryRadius(List<Drop> drops) {
-        Log.d(LOG_TAG, "Getting drops within disocvery radius.");
+        Log.d(LOG_TAG, "Getting drops within discovery radius.");
         ArrayList<Drop> dropsWithinRadius = new ArrayList<>();
         for(Drop drop : drops) {
             float distance = getDistanceBetweenCurrentLocationAndDrop(drop);
